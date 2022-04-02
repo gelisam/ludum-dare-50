@@ -8,10 +8,15 @@ import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import SDL (Point(P), V2(..), V4(..))
 import SDL qualified
+import SDL.Font (Font)
 import SDL.Font qualified as Font
+import SDL.Mixer (Music)
 import SDL.Mixer qualified as Mixer
+import SDL.Primitive (Color)
 import SDL.Primitive qualified as Primitive
+import SDL.Video (Rectangle(..), Surface, Texture, Window, WindowConfig)
 import SDL.Video qualified as Video
+import SDL.Video.Renderer (Renderer, RendererConfig)
 import SDL.Video.Renderer qualified as Renderer
 
 
@@ -38,15 +43,15 @@ withSoundEffect
 
 withMusic
   :: FilePath
-  -> (Mixer.Music -> IO a)
+  -> (Music -> IO a)
   -> IO a
 withMusic
   = withLoadable
 
 withWindow
   :: Text
-  -> Video.WindowConfig
-  -> (Video.Window -> IO a)
+  -> WindowConfig
+  -> (Window -> IO a)
   -> IO a
 withWindow title windowConfig
   = bracket
@@ -54,10 +59,10 @@ withWindow title windowConfig
       Video.destroyWindow
 
 withRenderer
-  :: Video.Window
+  :: Window
   -> CInt  -- ^ what is this?
-  -> Renderer.RendererConfig
-  -> (Renderer.Renderer -> IO a)
+  -> RendererConfig
+  -> (Renderer -> IO a)
   -> IO a
 withRenderer window index rendererConfig
   = bracket
@@ -75,7 +80,7 @@ withTTF
 withFont
   :: FilePath
   -> Font.PointSize
-  -> (Font.Font -> IO a)
+  -> (Font -> IO a)
   -> IO a
 withFont filePath pointSize
   = bracket
@@ -83,10 +88,10 @@ withFont filePath pointSize
       Font.free
 
 withTextSurface
-  :: Font.Font
-  -> Primitive.Color
+  :: Font
+  -> Color
   -> Text
-  -> (Renderer.Surface -> IO a)
+  -> (Surface -> IO a)
   -> IO a
 withTextSurface font color text
   = bracket
@@ -94,9 +99,9 @@ withTextSurface font color text
       Renderer.freeSurface
 
 withSurfaceTexture
-  :: Renderer.Renderer
-  -> Renderer.Surface
-  -> (Renderer.Texture -> IO a)
+  :: Renderer
+  -> Surface
+  -> (Texture -> IO a)
   -> IO a
 withSurfaceTexture renderer surface
   = bracket
@@ -119,13 +124,13 @@ main = do
                   print info
                   Renderer.rendererDrawColor renderer $= V4 0 0 0 255
                   Renderer.clear renderer
-                  Primitive.fillRectangle renderer (V2 100 100) (V2 200 200) (SDL.V4 0 0 255 255)
+                  Primitive.fillRectangle renderer (V2 100 100) (V2 200 200) (V4 0 0 255 255)
                   Renderer.copy
                     renderer
                     texture
                     Nothing  -- full texture
                     ( Just
-                    $ Renderer.Rectangle
+                    $ Rectangle
                         (P $ V2 100 100)
                         (V2 (100 + Renderer.textureWidth info)
                             (100 + Renderer.textureHeight info))
