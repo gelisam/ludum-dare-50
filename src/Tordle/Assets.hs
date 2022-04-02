@@ -11,12 +11,14 @@ import SDL.Extra
 
 
 data Assets = Assets
-  { assetsTitleTexture
-      :: Texture
-  , assetsLetterTextures
+  { assetsBlackLetterTextures
       :: Map Char Texture
+  , assetsTitleTexture
+      :: Texture
   , assetsMoveSoundEffect
       :: SoundEffect
+  , assetsWhiteLetterTextures
+      :: Map Char Texture
   }
 
 withAssets
@@ -24,19 +26,27 @@ withAssets
   -> (Assets -> IO a)
   -> IO a
 withAssets renderer body = do
-  withFont "assets/clear-sans.regular.ttf" 24 $ \font -> do
-    withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
-      withTextTexture renderer font (V4 0 255 255 255) "Tordle" $ \titleTexture -> do
-        withMultiple
-            [ With $ withTextTexture renderer font (V4 0 255 255 255) (Text.singleton c)
-            | c <- ['A'..'Z']
-            ]
-            $ \charTextures -> do
-          body $ Assets
-            { assetsTitleTexture
-                = titleTexture
-            , assetsLetterTextures
-                = Map.fromList $ zip ['A'..'Z'] charTextures
-            , assetsMoveSoundEffect
-                = moveSoundEffect
-            }
+  withFont "assets/clear-sans.regular.ttf" 50 $ \titleFont -> do
+    withFont "assets/clear-sans.regular.ttf" 24 $ \letterFont -> do
+      withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
+        withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle" $ \titleTexture -> do
+          withMultiple
+              [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
+              | c <- ['A'..'Z']
+              ]
+              $ \blackLetterTextures -> do
+            withMultiple
+                [ With $ withTextTexture renderer letterFont (V4 255 255 255 255) (Text.singleton c)
+                | c <- ['A'..'Z']
+                ]
+                $ \whiteLetterTextures -> do
+              body $ Assets
+                { assetsBlackLetterTextures
+                    = Map.fromList $ zip ['A'..'Z'] blackLetterTextures
+                , assetsTitleTexture
+                    = titleTexture
+                , assetsMoveSoundEffect
+                    = moveSoundEffect
+                , assetsWhiteLetterTextures
+                    = Map.fromList $ zip ['A'..'Z'] whiteLetterTextures
+                }

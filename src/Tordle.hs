@@ -4,7 +4,7 @@ module Tordle (main) where
 import Control.Concurrent (threadDelay)
 import Control.Lens ((^.))
 import Data.Foldable (for_)
-import Data.Map ((!))
+import Data.Map ((!), Map)
 import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..), _x)
@@ -15,7 +15,7 @@ import SDL.Mixer qualified as Mixer
 import SDL.Primitive (Color, Pos)
 import SDL.Primitive qualified as Primitive
 import SDL.Video qualified as Video
-import SDL.Video.Renderer (Renderer)
+import SDL.Video.Renderer (Renderer, Texture)
 import SDL.Video.Renderer qualified as Renderer
 import SDL.Extra
 import Tordle.Assets
@@ -82,14 +82,13 @@ drawOutlineBlock renderer pos color = do
 
 drawLetter
   :: Renderer
-  -> Assets
+  -> Map Char Texture
   -> Char
   -> Pos
   -> Color
   -> IO ()
-drawLetter renderer (Assets {assetsLetterTextures}) char pos _color = do
-  -- TODO: how to re-color a texture?
-  drawCenteredTexture renderer (assetsLetterTextures ! char) pos
+drawLetter renderer letterTextures char pos _color = do
+  drawCenteredTexture renderer (letterTextures ! char) pos
 
 
 drawBlock
@@ -98,23 +97,23 @@ drawBlock
   -> Block
   -> Pos
   -> IO ()
-drawBlock renderer assets (Block {..}) pos = do
+drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures}) (Block {..}) pos = do
   case blockStatus of
     Falling -> do
       drawSolidBlock renderer pos blue
-      drawLetter renderer assets blockLetter pos white
+      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
     InIncompleteWord -> do
       drawOutlineBlock renderer pos gray
-      drawLetter renderer assets blockLetter pos black
+      drawLetter renderer assetsBlackLetterTextures blockLetter pos black
     NotInWord -> do
       drawSolidBlock renderer pos gray
-      drawLetter renderer assets blockLetter pos white
+      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
     WrongSpot -> do
       drawSolidBlock renderer pos yellow
-      drawLetter renderer assets blockLetter pos white
+      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
     CorrectSpot -> do
       drawSolidBlock renderer pos green
-      drawLetter renderer assets blockLetter pos white
+      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
 
 
 main
@@ -137,4 +136,4 @@ main = do
             drawBlock renderer assets (Block 'L' CorrectSpot)      (half windowSize + 2 * unit _x * bLOCK_STRIDE)
             Renderer.present renderer
             Mixer.play (assetsMoveSoundEffect assets)
-            threadDelay 1_000_000
+            threadDelay 3_000_000
