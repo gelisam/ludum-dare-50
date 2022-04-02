@@ -4,12 +4,13 @@ module SDL.Extra where
 import Control.Exception (bracket, bracket_)
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
+import SDL (Point(P), V2(..))
 import SDL.Font (Font)
 import SDL.Font qualified as Font
 import SDL.Mixer (Music)
 import SDL.Mixer qualified as Mixer
-import SDL.Primitive (Color)
-import SDL.Video (Surface, Texture, Window, WindowConfig)
+import SDL.Primitive (Color, Pos)
+import SDL.Video (Rectangle(..), Surface, Texture, Window, WindowConfig)
 import SDL.Video qualified as Video
 import SDL.Video.Renderer (Renderer, RendererConfig)
 import SDL.Video.Renderer qualified as Renderer
@@ -102,3 +103,30 @@ withSurfaceTexture renderer surface
   = bracket
       (Renderer.createTextureFromSurface renderer surface)
       Renderer.destroyTexture
+
+drawCenteredTexture
+  :: Renderer
+  -> Texture
+  -> Pos
+  -> IO ()
+drawCenteredTexture renderer texture center = do
+  textureInfo <- Renderer.queryTexture texture
+  let textureSize
+        :: V2 CInt
+      textureSize
+        = V2 (Renderer.textureWidth textureInfo)
+             (Renderer.textureHeight textureInfo)
+      halfTextureSize
+        :: V2 CInt
+      halfTextureSize
+        = V2 (Renderer.textureWidth textureInfo `div` 2)
+             (Renderer.textureHeight textureInfo `div` 2)
+  Renderer.copy
+    renderer
+    texture
+    Nothing  -- full texture
+    (Just
+    $ Rectangle
+        (P (center - halfTextureSize))
+        textureSize
+    )
