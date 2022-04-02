@@ -18,7 +18,7 @@ main
 main = do
   SDL.initializeAll
   withTTF $ do
-    withFont "assets/kongtext.ttf" 24 $ \font -> do
+    withFont "assets/clear-sans.regular.ttf" 24 $ \font -> do
       Mixer.withAudio Mixer.defaultAudio 1024 $ do
         withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
           withWindow "Tordle" Video.defaultWindow $ \window -> do
@@ -37,8 +37,8 @@ main = do
                     ( Just
                     $ Rectangle
                         (P $ V2 100 100)
-                        (V2 (100 + Renderer.textureWidth info)
-                            (100 + Renderer.textureHeight info))
+                        (V2 (Renderer.textureWidth info)
+                            (Renderer.textureHeight info))
                     )
                   Renderer.present renderer
                   Mixer.play moveSoundEffect

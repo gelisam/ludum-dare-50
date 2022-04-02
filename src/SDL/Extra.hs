@@ -90,7 +90,7 @@ withTextSurface
   -> IO a
 withTextSurface font color text
   = bracket
-      (Font.solid font color text)
+      (Font.blended font color text)
       Renderer.freeSurface
 
 withSurfaceTexture
