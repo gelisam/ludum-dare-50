@@ -27,11 +27,13 @@ withLoadable filePath
          Mixer.halt Mixer.AllChannels  -- docs say not to free while playing
          Mixer.free chunk)
 
-withChunk
+type SoundEffect = Mixer.Chunk
+
+withSoundEffect
   :: FilePath
-  -> (Mixer.Chunk -> IO a)
+  -> (SoundEffect -> IO a)
   -> IO a
-withChunk
+withSoundEffect
   = withLoadable
 
 withMusic
@@ -108,7 +110,7 @@ main = do
   withTTF $ do
     withFont "assets/kongtext.ttf" 24 $ \font -> do
       Mixer.withAudio Mixer.defaultAudio 1024 $ do
-        withChunk "assets/move.wav" $ \moveChunk -> do
+        withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
           withWindow "Ludum Dare 50" Video.defaultWindow $ \window -> do
             withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
               withTextSurface font (V4 0 255 255 255) "Tordle" $ \surface -> do
@@ -129,5 +131,5 @@ main = do
                             (100 + Renderer.textureHeight info))
                     )
                   Renderer.present renderer
-                  Mixer.play moveChunk
+                  Mixer.play moveSoundEffect
                   threadDelay 1_000_000
