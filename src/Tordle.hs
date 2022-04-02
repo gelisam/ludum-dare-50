@@ -1,5 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost, NumericUnderscores, OverloadedStrings #-}
-module LudumDare (main) where
+module Tordle (main) where
 
 import Control.Concurrent (threadDelay)
 import Data.StateVar (($=))
@@ -21,7 +21,7 @@ main = do
     withFont "assets/kongtext.ttf" 24 $ \font -> do
       Mixer.withAudio Mixer.defaultAudio 1024 $ do
         withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
-          withWindow "Ludum Dare 50" Video.defaultWindow $ \window -> do
+          withWindow "Tordle" Video.defaultWindow $ \window -> do
             withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
               withTextSurface font (V4 0 255 255 255) "Tordle" $ \surface -> do
                 withSurfaceTexture renderer surface $ \texture -> do

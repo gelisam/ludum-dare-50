@@ -1,3 +1,3 @@
 module Main (main) where
 
-import LudumDare
+import Tordle
