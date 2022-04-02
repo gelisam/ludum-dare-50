@@ -12,11 +12,16 @@ category: Game
 
 library
     exposed-modules:  Tordle
+                    , Tordle.Assets
                     , Tordle.Colors
+                    , Data.Function.Extra
                     , SDL.Extra
 
     build-depends:    base ^>=4.16.0.0
                     , StateVar
+                    , containers
+                    , lens
+                    , linear
                     , sdl2
                     , sdl2-gfx
                     , sdl2-ttf

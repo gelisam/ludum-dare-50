@@ -83,6 +83,16 @@ withFont filePath pointSize
       (Font.load filePath pointSize)
       Font.free
 
+withSurfaceTexture
+  :: Renderer
+  -> Surface
+  -> (Texture -> IO a)
+  -> IO a
+withSurfaceTexture renderer surface
+  = bracket
+      (Renderer.createTextureFromSurface renderer surface)
+      Renderer.destroyTexture
+
 withTextSurface
   :: Font
   -> Color
@@ -94,15 +104,17 @@ withTextSurface font color text
       (Font.blended font color text)
       Renderer.freeSurface
 
-withSurfaceTexture
+withTextTexture
   :: Renderer
-  -> Surface
+  -> Font
+  -> Color
+  -> Text
   -> (Texture -> IO a)
   -> IO a
-withSurfaceTexture renderer surface
-  = bracket
-      (Renderer.createTextureFromSurface renderer surface)
-      Renderer.destroyTexture
+withTextTexture renderer font color text body = do
+  withTextSurface font color text $ \surface -> do
+    withSurfaceTexture renderer surface $ \texture -> do
+      body texture
 
 drawCenteredTexture
   :: Renderer
@@ -116,17 +128,20 @@ drawCenteredTexture renderer texture center = do
       textureSize
         = V2 (Renderer.textureWidth textureInfo)
              (Renderer.textureHeight textureInfo)
-      halfTextureSize
-        :: V2 CInt
-      halfTextureSize
-        = V2 (Renderer.textureWidth textureInfo `div` 2)
-             (Renderer.textureHeight textureInfo `div` 2)
   Renderer.copy
     renderer
     texture
     Nothing  -- full texture
     (Just
     $ Rectangle
-        (P (center - halfTextureSize))
+        (P (center - half textureSize))
         textureSize
     )
+
+-- V2 CInt -> V2 CInt
+-- V4 CInt -> V4 CInt
+half
+  :: (Functor f, Integral a)
+  => f a -> f a
+half
+  = fmap (`div` 2)
