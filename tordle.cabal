@@ -12,6 +12,7 @@ category: Game
 
 library
     exposed-modules:  Tordle
+                    , Tordle.Colors
                     , SDL.Extra
 
     build-depends:    base ^>=4.16.0.0
