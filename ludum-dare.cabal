@@ -33,6 +33,7 @@ library
                     , text
     hs-source-dirs:   src
     default-language: Haskell2010
+    ghc-options: -W -Wall
 
 executable ludum-dare-50
     main-is:          Main.hs

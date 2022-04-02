@@ -2,8 +2,8 @@
 module LudumDare (main) where
 
 import Control.Concurrent (threadDelay)
-import Control.Exception (bracket, bracket_, finally)
-import Data.StateVar (get, ($=))
+import Control.Exception (bracket, bracket_)
+import Data.StateVar (($=))
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import SDL (Point(P), V2(..), V4(..))
