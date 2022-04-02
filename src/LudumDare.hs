@@ -38,6 +38,6 @@ main
 main = do
   SDL.initializeAll
   Mixer.withAudio Mixer.defaultAudio 1024 $ do
-    withChunk "move.wav" $ \moveChunk -> do
+    withChunk "assets/move.wav" $ \moveChunk -> do
       Mixer.play moveChunk
       threadDelay 1_000_000
