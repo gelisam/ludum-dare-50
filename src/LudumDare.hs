@@ -1,4 +1,6 @@
-module LudumDare (someFunc) where
+module LudumDare (main) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+main
+  :: IO ()
+main = do
+  putStrLn "typechecks."
