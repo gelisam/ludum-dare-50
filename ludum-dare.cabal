@@ -28,6 +28,7 @@ library
                     , StateVar
                     , sdl2
                     , sdl2-gfx
+                    , sdl2-ttf
                     , sdl2-mixer
                     , text
     hs-source-dirs:   src
