@@ -77,7 +77,7 @@ drawOutlineBlock renderer pos color = do
     Primitive.rectangle
       renderer
       (pos - half bLOCK_SIZE + fromIntegral i)
-      (pos + half bLOCK_SIZE - fromIntegral i)
+      (pos + half bLOCK_SIZE - fromIntegral i + 1)
       color
 
 drawLetter
@@ -85,35 +85,38 @@ drawLetter
   -> Map Char Texture
   -> Char
   -> Pos
-  -> Color
   -> IO ()
-drawLetter renderer letterTextures char pos _color = do
+drawLetter renderer letterTextures char pos = do
   drawCenteredTexture renderer (letterTextures ! char) pos
 
 
 drawBlock
   :: Renderer
   -> Assets
-  -> Block
+  -> Maybe Block
   -> Pos
   -> IO ()
-drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures}) (Block {..}) pos = do
-  case blockStatus of
-    Falling -> do
-      drawSolidBlock renderer pos blue
-      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
-    InIncompleteWord -> do
-      drawOutlineBlock renderer pos gray
-      drawLetter renderer assetsBlackLetterTextures blockLetter pos black
-    NotInWord -> do
-      drawSolidBlock renderer pos gray
-      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
-    WrongSpot -> do
-      drawSolidBlock renderer pos yellow
-      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
-    CorrectSpot -> do
-      drawSolidBlock renderer pos green
-      drawLetter renderer assetsWhiteLetterTextures blockLetter pos white
+drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures}) maybeBlock pos = do
+  case maybeBlock of
+    Nothing -> do
+      drawOutlineBlock renderer pos lightGray
+    Just (Block {..}) -> do
+      case blockStatus of
+        Falling -> do
+          drawSolidBlock renderer pos blue
+          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+        InIncompleteWord -> do
+          drawOutlineBlock renderer pos gray
+          drawLetter renderer assetsBlackLetterTextures blockLetter pos
+        NotInWord -> do
+          drawSolidBlock renderer pos gray
+          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+        WrongSpot -> do
+          drawSolidBlock renderer pos yellow
+          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+        CorrectSpot -> do
+          drawSolidBlock renderer pos green
+          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
 
 
 main
@@ -129,11 +132,12 @@ main = do
             Renderer.rendererDrawColor renderer $= V4 255 255 255 255
             Renderer.clear renderer
             drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
-            drawBlock renderer assets (Block 'T' Falling)          (half windowSize - 2 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Block 'O' InIncompleteWord) (half windowSize - 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Block 'R' NotInWord)        (half windowSize + 0 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Block 'D' WrongSpot)        (half windowSize + 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Block 'L' CorrectSpot)      (half windowSize + 2 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets Nothing                             (half windowSize - 3 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block 'O' Falling)          (half windowSize - 2 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block 'R' InIncompleteWord) (half windowSize - 1 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block 'D' NotInWord)        (half windowSize + 0 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block 'L' WrongSpot)        (half windowSize + 1 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block 'E' CorrectSpot)      (half windowSize + 2 * unit _x * bLOCK_STRIDE)
             Renderer.present renderer
             Mixer.play (assetsMoveSoundEffect assets)
             threadDelay 3_000_000
