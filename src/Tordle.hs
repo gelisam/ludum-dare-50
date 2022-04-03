@@ -30,12 +30,18 @@ data BlockStatus
   | CorrectSpot
   deriving Show
 
+data Label
+  = Letter Char
+  | Wild
+  deriving Show
+
 data Block = Block
-  { blockLetter
-      :: Char
+  { blockLabel
+      :: Label
   , blockStatus
       :: BlockStatus
   }
+  deriving Show
 
 
 bLOCK_SIZE
@@ -89,6 +95,19 @@ drawLetter
 drawLetter renderer letterTextures char pos = do
   drawCenteredTexture renderer (letterTextures ! char) pos
 
+drawLabel
+  :: Renderer
+  -> Map Char Texture
+  -> Label
+  -> Pos
+  -> IO ()
+drawLabel renderer letterTextures label pos = do
+  case label of
+    Letter char -> do
+      drawLetter renderer letterTextures char pos
+    Wild -> do
+      pure ()
+
 
 drawBlock
   :: Renderer
@@ -104,19 +123,19 @@ drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures
       case blockStatus of
         Falling -> do
           drawSolidBlock renderer pos blue
-          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
         InIncompleteWord -> do
           drawOutlineBlock renderer pos gray
-          drawLetter renderer assetsBlackLetterTextures blockLetter pos
+          drawLabel renderer assetsBlackLetterTextures blockLabel pos
         NotInWord -> do
           drawSolidBlock renderer pos gray
-          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
         WrongSpot -> do
           drawSolidBlock renderer pos yellow
-          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
         CorrectSpot -> do
           drawSolidBlock renderer pos green
-          drawLetter renderer assetsWhiteLetterTextures blockLetter pos
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
 
 
 main
@@ -132,12 +151,13 @@ main = do
             Renderer.rendererDrawColor renderer $= V4 255 255 255 255
             Renderer.clear renderer
             drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
-            drawBlock renderer assets Nothing                             (half windowSize - 3 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block 'O' Falling)          (half windowSize - 2 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block 'R' InIncompleteWord) (half windowSize - 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block 'D' NotInWord)        (half windowSize + 0 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block 'L' WrongSpot)        (half windowSize + 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block 'E' CorrectSpot)      (half windowSize + 2 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets Nothing                                      (half windowSize - 3 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block Wild Falling)                  (half windowSize - 2 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block (Letter 'O') Falling)          (half windowSize - 1 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block (Letter 'R') InIncompleteWord) (half windowSize + 0 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block (Letter 'D') NotInWord)        (half windowSize + 1 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block (Letter 'L') WrongSpot)        (half windowSize + 2 * unit _x * bLOCK_STRIDE)
+            drawBlock renderer assets (Just $ Block (Letter 'E') CorrectSpot)      (half windowSize + 3 * unit _x * bLOCK_STRIDE)
             Renderer.present renderer
             Mixer.play (assetsMoveSoundEffect assets)
             threadDelay 3_000_000
