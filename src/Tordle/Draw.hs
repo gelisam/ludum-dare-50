@@ -1,12 +1,20 @@
 {-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, RecordWildCards, ScopedTypeVariables #-}
 module Tordle.Draw where
 
+import Control.Lens ((^.))
 import Data.Foldable (for_)
 import Data.Map ((!), Map)
+import Data.Map qualified as Map
+import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
+import Linear.V2 (V2(..), _x, _y)
+import Linear.V4 (V4(..))
 import SDL.Primitive (Color, Pos)
 import SDL.Primitive qualified as Primitive
+import SDL.Video (Window)
+import SDL.Video qualified as Video
 import SDL.Video.Renderer (Renderer, Texture)
+import SDL.Video.Renderer qualified as Renderer
 import SDL.Extra
 import Tordle.Assets
 import Tordle.Colors
@@ -104,3 +112,32 @@ drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures
         CorrectSpot -> do
           drawSolidBlock renderer pos green
           drawLabel renderer assetsWhiteLetterTextures blockLabel pos
+
+drawBoard
+  :: Renderer
+  -> Assets
+  -> Board
+  -> Pos
+  -> IO ()
+drawBoard renderer assets board center = do
+  let topLeft
+        :: Pos
+      topLeft
+        = center - half ((bOARD_SIZE - 1) * bLOCK_STRIDE)
+  for_ [0..bOARD_SIZE^._y - 1] $ \j -> do
+    for_ [0..bOARD_SIZE^._x -1] $ \i -> do
+      let ij = V2 i j
+      drawBlock renderer assets (Map.lookup ij board) (topLeft + ij * bLOCK_STRIDE)
+
+drawWorld
+  :: Window
+  -> Renderer
+  -> Assets
+  -> World
+  -> IO ()
+drawWorld window renderer assets (World {..}) = do
+  windowSize <- get $ Video.windowSize window
+  Renderer.rendererDrawColor renderer $= V4 255 255 255 255
+  Renderer.clear renderer
+  drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
+  drawBoard renderer assets worldBoard (half windowSize)

@@ -2,11 +2,8 @@
 module Tordle (main) where
 
 import Control.Concurrent (threadDelay)
-import Control.Lens ((^.))
-import Data.StateVar (($=), get)
-import Linear.V2 (V2(..), _x)
-import Linear.V4 (V4(..))
-import Linear.Vector (unit)
+import Data.Map qualified as Map
+import Linear.V2 (V2(..))
 import SDL qualified
 import SDL.Mixer qualified as Mixer
 import SDL.Video qualified as Video
@@ -24,19 +21,18 @@ main = do
   withTTF $ do
     Mixer.withAudio Mixer.defaultAudio 1024 $ do
       withWindow "Tordle" Video.defaultWindow $ \window -> do
-        windowSize <- get $ Video.windowSize window
         withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
           withAssets renderer $ \assets -> do
-            Renderer.rendererDrawColor renderer $= V4 255 255 255 255
-            Renderer.clear renderer
-            drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
-            drawBlock renderer assets Nothing                                      (half windowSize - 3 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block Wild Falling)                  (half windowSize - 2 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block (Letter 'O') Falling)          (half windowSize - 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block (Letter 'R') InIncompleteWord) (half windowSize + 0 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block (Letter 'D') NotInWord)        (half windowSize + 1 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block (Letter 'L') WrongSpot)        (half windowSize + 2 * unit _x * bLOCK_STRIDE)
-            drawBlock renderer assets (Just $ Block (Letter 'E') CorrectSpot)      (half windowSize + 3 * unit _x * bLOCK_STRIDE)
+            drawWorld window renderer assets $ World $ Map.fromList
+              [ (V2 1 1, Block (Letter 'A') Falling)
+              , (V2 1 2, Block Wild Falling)
+              , (V2 2 2, Block Wild Falling)
+              , (V2 2 3, Block (Letter 'B') Falling)
+              , (V2 0 5, Block (Letter 'C') InIncompleteWord)
+              , (V2 1 5, Block Wild InIncompleteWord)
+              , (V2 4 5, Block (Letter 'D') InIncompleteWord)
+              , (V2 5 5, Block (Letter 'E') InIncompleteWord)
+              ]
             Renderer.present renderer
             Mixer.play (assetsMoveSoundEffect assets)
-            threadDelay 3_000_000
+            threadDelay 5_000_000
