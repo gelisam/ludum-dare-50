@@ -143,15 +143,16 @@ drawBoard renderer assets board center = do
       when (inMainBoard || isJust maybeBlock) $ do
         drawBlock renderer assets maybeBlock (topLeft + ij * bLOCK_STRIDE)
 
-drawWorld
+presentWorld
   :: Window
   -> Renderer
   -> Assets
   -> World
   -> IO ()
-drawWorld window renderer assets (World {..}) = do
+presentWorld window renderer assets (World {..}) = do
   windowSize <- get $ Video.windowSize window
   Renderer.rendererDrawColor renderer $= V4 255 255 255 255
   Renderer.clear renderer
   drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
   drawBoard renderer assets worldBoard (half windowSize)
+  Renderer.present renderer

@@ -1,17 +1,18 @@
-{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, NumericUnderscores, OverloadedStrings, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE ImportQualifiedPost, OverloadedStrings #-}
 module Tordle (main) where
 
-import Control.Concurrent (threadDelay)
-import Data.Map qualified as Map
-import Linear.V2 (V2(..))
+import Control.Monad (unless)
+import Data.Function (fix)
+import Data.IORef
+import Foreign.C.Types (CInt)
+import Reactive.Banana.Frameworks qualified as Banana
 import SDL qualified
 import SDL.Mixer qualified as Mixer
 import SDL.Video qualified as Video
 import SDL.Video.Renderer qualified as Renderer
 import SDL.Extra
 import Tordle.Assets
-import Tordle.Draw
-import Tordle.Model
+import Tordle.Frp
 
 
 main
@@ -23,16 +24,45 @@ main = do
       withWindow "Tordle" Video.defaultWindow $ \window -> do
         withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
           withAssets renderer $ \assets -> do
-            drawWorld window renderer assets $ World $ Map.fromList
-              [ (V2 1 0, Block (Letter 'A') Falling)
-              , (V2 1 1, Block Wild Falling)
-              , (V2 2 1, Block Wild Falling)
-              , (V2 2 2, Block (Letter 'B') Falling)
-              , (V2 0 9, Block (Letter 'C') InIncompleteWord)
-              , (V2 1 9, Block Wild InIncompleteWord)
-              , (V2 4 9, Block (Letter 'D') InIncompleteWord)
-              , (V2 5 9, Block (Letter 'E') InIncompleteWord)
-              ]
-            Renderer.present renderer
-            Mixer.play (assetsMoveSoundEffect assets)
-            threadDelay 5_000_000
+            (sdlPayloadAddHandler, fireSdlPayload) <- Banana.newAddHandler
+            (timeAddHandler, fireTime) <- Banana.newAddHandler
+            shouldQuitRef <- newIORef False
+            let quit
+                  :: IO ()
+                quit = do
+                  writeIORef shouldQuitRef True
+            eventNetwork <- Banana.compile $ do
+              sdlE <- Banana.fromAddHandler sdlPayloadAddHandler
+              timeE <- Banana.fromAddHandler timeAddHandler
+              frpNetwork window renderer assets sdlE timeE quit
+            Banana.actuate eventNetwork
+            fix $ \loop -> do
+              shouldQuit <- readIORef shouldQuitRef
+              unless shouldQuit $ do
+                let fps
+                      :: CInt
+                    fps
+                      = 60
+                    ms_per_frame
+                      :: CInt
+                    ms_per_frame
+                      = 1000 `div` fps
+                maybeSdlEvent <- SDL.waitEventTimeout ms_per_frame
+                let stop
+                      :: IO ()
+                    stop = do
+                      pure ()
+                    continue
+                      :: IO ()
+                    continue = do
+                      time <- SDL.time
+                      fireTime time
+                      loop
+                case SDL.eventPayload <$> maybeSdlEvent of
+                  Just SDL.QuitEvent -> do
+                    stop
+                  Nothing -> do
+                    continue
+                  Just sdlPayload -> do
+                    fireSdlPayload sdlPayload
+                    continue
