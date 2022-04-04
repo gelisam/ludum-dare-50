@@ -2,9 +2,11 @@
 module Tordle.Draw where
 
 import Control.Lens ((^.))
+import Control.Monad (when)
 import Data.Foldable (for_)
 import Data.Map ((!), Map)
 import Data.Map qualified as Map
+import Data.Maybe (isJust)
 import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..), _x, _y)
@@ -123,11 +125,23 @@ drawBoard renderer assets board center = do
   let topLeft
         :: Pos
       topLeft
-        = center - half ((bOARD_SIZE - 1) * bLOCK_STRIDE)
-  for_ [0..bOARD_SIZE^._y - 1] $ \j -> do
-    for_ [0..bOARD_SIZE^._x -1] $ \i -> do
-      let ij = V2 i j
-      drawBlock renderer assets (Map.lookup ij board) (topLeft + ij * bLOCK_STRIDE)
+        = center - half ((fULL_BOARD_SIZE - 1) * bLOCK_STRIDE)
+  for_ [0..fULL_BOARD_SIZE^._y - 1] $ \j -> do
+    for_ [0..fULL_BOARD_SIZE^._x -1] $ \i -> do
+      let ij
+            :: V2 CInt
+          ij
+            = V2 i j
+      let inMainBoard
+            :: Bool
+          inMainBoard
+            = j >= aBOVE_BOARD_BUFFER
+      let maybeBlock
+            :: Maybe Block
+          maybeBlock
+            = Map.lookup ij board
+      when (inMainBoard || isJust maybeBlock) $ do
+        drawBlock renderer assets maybeBlock (topLeft + ij * bLOCK_STRIDE)
 
 drawWorld
   :: Window

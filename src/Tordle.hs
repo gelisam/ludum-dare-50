@@ -24,14 +24,14 @@ main = do
         withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
           withAssets renderer $ \assets -> do
             drawWorld window renderer assets $ World $ Map.fromList
-              [ (V2 1 1, Block (Letter 'A') Falling)
-              , (V2 1 2, Block Wild Falling)
-              , (V2 2 2, Block Wild Falling)
-              , (V2 2 3, Block (Letter 'B') Falling)
-              , (V2 0 5, Block (Letter 'C') InIncompleteWord)
-              , (V2 1 5, Block Wild InIncompleteWord)
-              , (V2 4 5, Block (Letter 'D') InIncompleteWord)
-              , (V2 5 5, Block (Letter 'E') InIncompleteWord)
+              [ (V2 1 0, Block (Letter 'A') Falling)
+              , (V2 1 1, Block Wild Falling)
+              , (V2 2 1, Block Wild Falling)
+              , (V2 2 2, Block (Letter 'B') Falling)
+              , (V2 0 9, Block (Letter 'C') InIncompleteWord)
+              , (V2 1 9, Block Wild InIncompleteWord)
+              , (V2 4 9, Block (Letter 'D') InIncompleteWord)
+              , (V2 5 9, Block (Letter 'E') InIncompleteWord)
               ]
             Renderer.present renderer
             Mixer.play (assetsMoveSoundEffect assets)
