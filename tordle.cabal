@@ -14,6 +14,8 @@ library
     exposed-modules:  Tordle
                     , Tordle.Assets
                     , Tordle.Colors
+                    , Tordle.Draw
+                    , Tordle.Model
                     , Data.Function.Extra
                     , SDL.Extra
 
