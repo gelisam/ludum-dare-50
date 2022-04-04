@@ -18,11 +18,13 @@ library
                     , Tordle.Frp
                     , Tordle.Model
                     , Data.Function.Extra
+                    , Reactive.Banana.Extra
                     , SDL.Extra
 
     build-depends:    base ^>=4.16.0.0
                     , StateVar
                     , containers
+                    , generic-lens
                     , lens
                     , linear
                     , reactive-banana

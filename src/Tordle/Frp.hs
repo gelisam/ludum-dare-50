@@ -1,9 +1,11 @@
-{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost #-}
 module Tordle.Frp where
 
+import Data.Generics.Labels ()
 import Data.Map qualified as Map
 import Linear.V2 (V2(..))
 import Reactive.Banana.Combinators
+import Reactive.Banana.Extra
 import Reactive.Banana.Frameworks
 import SDL qualified
 import SDL.Mixer qualified as Mixer
@@ -26,17 +28,11 @@ frpNetwork window renderer assets sdlE timeE quit = do
   let mouseClickE
         :: Event SDL.MouseButtonEventData
       mouseClickE
-        = filterJust
-        $ fmap (\e -> do SDL.MouseButtonEvent x <- pure e
-                         pure x)
-        $ sdlE
+        = filterPrismE #_MouseButtonEvent sdlE
   let keyboardE
         :: Event SDL.KeyboardEventData
       keyboardE
-        = filterJust
-        $ fmap (\e -> do SDL.KeyboardEvent x <- pure e
-                         pure x)
-        $ sdlE
+        = filterPrismE #_KeyboardEvent sdlE
 
   let worldB
         :: Behavior World
