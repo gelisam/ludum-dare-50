@@ -2,6 +2,19 @@
 module Data.Function.Extra where
 
 
+anyP
+  :: [a -> Bool]
+  -> a -> Bool
+anyP ps a
+  = or $ fmap ($ a) ps
+
+allP
+  :: [a -> Bool]
+  -> a -> Bool
+allP ps a
+  = and $ fmap ($ a) ps
+
+
 newtype With m x = With
   { unWith :: forall a. (x -> m a) -> m a }
 

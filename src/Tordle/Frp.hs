@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost #-}
 module Tordle.Frp where
 
+import Control.Lens (filtered)
+import Data.Function.Extra
 import Data.Generics.Labels ()
 import Data.Map qualified as Map
 import Linear.V2 (V2(..))
@@ -12,6 +14,7 @@ import SDL.Mixer qualified as Mixer
 import SDL.Video (Window)
 import SDL.Video.Renderer (Renderer)
 import Tordle.Assets
+import Tordle.Dir
 import Tordle.Draw
 import Tordle.Model
 
@@ -25,29 +28,38 @@ frpNetwork
   -> IO ()  -- ^ quit
   -> MomentIO ()
 frpNetwork window renderer assets sdlE timeE quit = do
-  let mouseClickE
-        :: Event SDL.MouseButtonEventData
-      mouseClickE
-        = filterPrismE #_MouseButtonEvent sdlE
-  let keyboardE
-        :: Event SDL.KeyboardEventData
-      keyboardE
-        = filterPrismE #_KeyboardEvent sdlE
+  let keyboardE = filterPrismE #_KeyboardEvent sdlE
+  let keyPressE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Pressed)
+                               . #keyboardEventKeysym
+                               )
+                               keyboardE
+  let keyReleaseE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Released)
+                                 . #keyboardEventKeysym
+                                 )
+                                 keyboardE
+  let hasScancode scancode keysym = SDL.keysymScancode keysym == scancode
+  let hasKeycode  keycode  keysym = SDL.keysymKeycode  keysym == keycode
 
-  let worldB
-        :: Behavior World
-      worldB
-        = pure
-        $ World $ Map.fromList
-            [ (V2 1 0, Block (Letter 'A') Falling)
-            , (V2 1 1, Block Wild Falling)
-            , (V2 2 1, Block Wild Falling)
-            , (V2 2 2, Block (Letter 'B') Falling)
-            , (V2 0 9, Block (Letter 'C') InIncompleteWord)
-            , (V2 1 9, Block Wild InIncompleteWord)
-            , (V2 4 9, Block (Letter 'D') InIncompleteWord)
-            , (V2 5 9, Block (Letter 'E') InIncompleteWord)
-            ]
+  -- WASD, vim-style HJKL, or simply arrow keys
+  let upE    = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp])      keyPressE
+  let leftE  = () <$ filterE (anyP [hasScancode SDL.ScancodeA, hasScancode SDL.ScancodeH, hasKeycode SDL.KeycodeLeft])    keyPressE
+  let downE  = () <$ filterE (anyP [hasScancode SDL.ScancodeS, hasScancode SDL.ScancodeJ, hasKeycode SDL.KeycodeDown])    keyPressE
+  let rightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])   keyPressE
+  let escE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
+
+  let pieceBlocksB = pure $ Map.fromList
+        [ (V2 1 0, Letter 'A')
+        , (V2 1 1, Wild)
+        , (V2 2 1, Wild)
+        , (V2 2 2, Letter 'B')
+        ]
+  piecePosB <- statefulB (V2 1 1)
+    [ (+ towards dir) <$ dirE
+    | (dir, dirE) <- [(N, upE), (E, rightE), (W, leftE), (S, downE)]
+    ]
+  let boardB = pure Map.empty
+  let currentPieceB = Piece <$> pieceBlocksB <*> piecePosB
+  let worldB = World <$> boardB <*> currentPieceB
   reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
-  reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ keyboardE)
-  reactimate (quit <$ mouseClickE)
+  reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [upE, leftE, downE, rightE])
+  reactimate (quit <$ escE)

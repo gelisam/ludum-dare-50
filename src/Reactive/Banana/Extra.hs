@@ -11,3 +11,13 @@ filterPrismE
   -> Event a
 filterPrismE optic
   = filterJust . fmap (preview optic)
+
+statefulB
+  :: MonadMoment m
+  => a
+  -> [Event (a -> a)]
+  -> m (Behavior a)
+statefulB a0
+  = accumB a0
+  . unions
+  . reverse  -- so that the last function is applied last

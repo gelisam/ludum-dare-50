@@ -132,15 +132,11 @@ drawBoard renderer assets board center = do
             :: V2 CInt
           ij
             = V2 i j
-      let inMainBoard
-            :: Bool
-          inMainBoard
-            = j >= aBOVE_BOARD_BUFFER
       let maybeBlock
             :: Maybe Block
           maybeBlock
             = Map.lookup ij board
-      when (inMainBoard || isJust maybeBlock) $ do
+      when (inMainBoard ij || isJust maybeBlock) $ do
         drawBlock renderer assets maybeBlock (topLeft + ij * bLOCK_STRIDE)
 
 presentWorld
@@ -154,5 +150,5 @@ presentWorld window renderer assets (World {..}) = do
   Renderer.rendererDrawColor renderer $= V4 255 255 255 255
   Renderer.clear renderer
   drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
-  drawBoard renderer assets worldBoard (half windowSize)
+  drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard) (half windowSize)
   Renderer.present renderer
