@@ -1,10 +1,12 @@
-{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost #-}
+{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost, RecursiveDo #-}
 module Tordle.Frp where
 
 import Control.Lens (filtered)
 import Data.Function.Extra
 import Data.Generics.Labels ()
+import Data.Map (Map)
 import Data.Map qualified as Map
+import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
 import Reactive.Banana.Combinators
 import Reactive.Banana.Extra
@@ -27,7 +29,7 @@ frpNetwork
   -> Event Double  -- ^ time
   -> IO ()  -- ^ quit
   -> MomentIO ()
-frpNetwork window renderer assets sdlE timeE quit = do
+frpNetwork window renderer assets sdlE timeE quit = mdo
   let keyboardE = filterPrismE #_KeyboardEvent sdlE
   let keyPressE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Pressed)
                                . #keyboardEventKeysym
@@ -53,8 +55,18 @@ frpNetwork window renderer assets sdlE timeE quit = do
         , (V2 2 1, Wild)
         , (V2 2 2, Letter 'B')
         ]
-  piecePosB <- statefulB (V2 1 1)
-    [ (+ towards dir) <$ dirE
+  let fitsInFullBoard
+        :: Map (V2 CInt) Label
+        -> V2 CInt
+        -> Bool
+      fitsInFullBoard blocks pos
+        = all inFullBoard
+        $ Map.keys
+        $ renderPiece
+        $ Piece blocks pos
+  piecePosB <- steppersB (V2 1 1)
+    [ filterBE (fitsInFullBoard <$> pieceBlocksB)
+    $ (+) <$> piecePosB <@> (towards dir <$ dirE)
     | (dir, dirE) <- [(N, upE), (E, rightE), (W, leftE), (S, downE)]
     ]
   let boardB = pure Map.empty
