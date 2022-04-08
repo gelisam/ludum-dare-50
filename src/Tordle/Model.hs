@@ -1,10 +1,12 @@
-{-# LANGUAGE ImportQualifiedPost, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedLabels, RecordWildCards #-}
 module Tordle.Model where
 
 import Control.Lens
+import Data.Generics.Labels ()
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Foreign.C.Types (CInt)
+import GHC.Generics (Generic)
 import Linear.V2 (V2(..), _x, _y)
 
 
@@ -54,12 +56,12 @@ data BlockStatus
   | NotInWord
   | WrongSpot
   | CorrectSpot
-  deriving Show
+  deriving (Generic, Show)
 
 data Label
   = Letter Char
   | Wild
-  deriving Show
+  deriving (Generic, Show)
 
 data Block = Block
   { blockLabel
@@ -67,7 +69,7 @@ data Block = Block
   , blockStatus
       :: BlockStatus
   }
-  deriving Show
+  deriving (Generic, Show)
 
 type Board
   = Map (V2 CInt) Block
@@ -78,7 +80,19 @@ data Piece = Piece
   , piecePos
       :: V2 CInt
   }
-  deriving Show
+  deriving (Generic, Show)
+
+rotateLeft
+  :: Map (V2 CInt) Label
+  -> Map (V2 CInt) Label
+rotateLeft
+  = Map.mapKeys (\(V2 x y) -> V2 y (-x))
+
+rotateRight
+  :: Map (V2 CInt) Label
+  -> Map (V2 CInt) Label
+rotateRight
+  = Map.mapKeys (\(V2 x y) -> V2 (-y) x)
 
 renderPiece
   :: Piece
@@ -95,4 +109,4 @@ data World = World
   , worldCurrentPiece
       :: Piece
   }
-  deriving Show
+  deriving (Generic, Show)
