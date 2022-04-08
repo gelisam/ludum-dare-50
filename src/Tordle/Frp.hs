@@ -50,6 +50,16 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let rightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])                         keyPressE
   let escE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
+  timeB <- stepper 0 timeE
+  let gravityE
+        = fmap (const ())
+        $ filterE id
+        $ (<=) <$> nextGravityB <@> timeE
+  nextGravityB <- steppersB 1
+    [ ((+ 1) <$> timeB) <@ gravityE
+    , ((+ 1) <$> timeB) <@ downE
+    ]
+
   let fitsInFullBoard
         :: Map (V2 CInt) Label
         -> V2 CInt
@@ -73,7 +83,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   piecePosB <- steppersB (V2 1 1)
     [ filterBE (fitsInFullBoard <$> pieceBlocksB)
     $ (+) <$> piecePosB <@> (towards dir <$ dirE)
-    | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE)]
+    | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
     ]
   let boardB = pure Map.empty
   let currentPieceB = Piece <$> pieceBlocksB <*> piecePosB

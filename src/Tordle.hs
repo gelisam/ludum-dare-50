@@ -24,6 +24,7 @@ main = do
       withWindow "Tordle" Video.defaultWindow $ \window -> do
         withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
           withAssets renderer $ \assets -> do
+            time0 <- SDL.time
             (sdlPayloadAddHandler, fireSdlPayload) <- Banana.newAddHandler
             (timeAddHandler, fireTime) <- Banana.newAddHandler
             shouldQuitRef <- newIORef False
@@ -56,7 +57,7 @@ main = do
                       :: IO ()
                     continue = do
                       time <- SDL.time
-                      fireTime time
+                      fireTime (time - time0)
                       loop
                 case SDL.eventPayload <$> maybeSdlEvent of
                   Just SDL.QuitEvent -> do
