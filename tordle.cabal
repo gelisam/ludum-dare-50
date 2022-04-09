@@ -18,6 +18,7 @@ library
                     , Tordle.Draw
                     , Tordle.Frp
                     , Tordle.Model
+                    , Tordle.Tetromino
                     , Data.Function.Extra
                     , Reactive.Banana.Extra
                     , SDL.Extra
