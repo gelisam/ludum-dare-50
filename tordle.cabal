@@ -20,6 +20,7 @@ library
                     , Tordle.Model
                     , Tordle.Tetromino
                     , Data.Function.Extra
+                    , Linear.Extra
                     , Reactive.Banana.Extra
                     , SDL.Extra
 

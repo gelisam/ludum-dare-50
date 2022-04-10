@@ -9,6 +9,7 @@ import Data.Map qualified as Map
 import Data.Maybe (isJust)
 import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
+import Linear.Extra
 import Linear.V2 (V2(..), _x, _y)
 import Linear.V4 (V4(..))
 import SDL.Primitive (Color, Pos)

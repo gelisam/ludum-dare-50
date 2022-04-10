@@ -4,6 +4,7 @@ module SDL.Extra where
 import Control.Exception (bracket, bracket_)
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
+import Linear.Extra
 import SDL (Point(P), V2(..))
 import SDL.Font (Font)
 import SDL.Font qualified as Font
@@ -137,11 +138,3 @@ drawCenteredTexture renderer texture center = do
         (P (center - half textureSize))
         textureSize
     )
-
--- V2 CInt -> V2 CInt
--- V4 CInt -> V4 CInt
-half
-  :: (Functor f, Integral a)
-  => f a -> f a
-half
-  = fmap (`div` 2)

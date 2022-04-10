@@ -8,6 +8,7 @@ import Data.Maybe qualified as Unsafe (fromJust)
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Foreign.C.Types (CInt)
+import Linear.Extra
 import Linear.V2 (V2(..), _x, _y)
 import Tordle.Dir
 
@@ -214,6 +215,39 @@ freePolynominoes
   = Set.singleton freeMonomino
   : fmap (foldMap freePolynominoExtensions) freePolynominoes
 
+
+-- same as 'OneSidedPolynomino', but the list of rotations is ordered and (0,0) is close to center of the piece
+newtype CenteredPolynomino = CenteredPolynomino
+  { unCenteredPolynomino
+      :: [Set (V2 CInt)]
+  }
+
+mkCenteredPolynomino
+  :: OneSidedPolynomino
+  -> CenteredPolynomino
+mkCenteredPolynomino
+  = CenteredPolynomino
+  . fmap centerPolynomino
+  . Set.toList
+  . unOneSidedPolynomino
+  where
+    centerPolynomino
+      :: FixedPolynomino
+      -> Set (V2 CInt)
+    centerPolynomino (FixedPolynomino positions)
+      = Set.map (subtract center)
+      $ positions
+      where
+        maxX = Unsafe.fromJust $ maximumOf (folded . _x) positions
+        maxY = Unsafe.fromJust $ maximumOf (folded . _y) positions
+        center = half (V2 maxX maxY)
+
+tetrominoes
+  :: [CenteredPolynomino]
+tetrominoes
+  = fmap mkCenteredPolynomino
+  $ Set.toList
+  $ (oneSidedPolynominoes !! 3)
 
 -- |
 -- >>> test
