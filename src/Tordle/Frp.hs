@@ -1,7 +1,10 @@
 {-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost, RecursiveDo #-}
+{-# OPTIONS -Wno-name-shadowing #-}
 module Tordle.Frp where
 
 import Control.Lens (filtered)
+import Control.Monad (when)
+import Control.Monad.Trans.State
 import Data.Function.Extra
 import Data.Generics.Labels ()
 import Data.Map (Map)
@@ -55,9 +58,9 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = fmap (const ())
         $ filterE id
         $ (<=) <$> nextGravityB <@> timeE
-  nextGravityB <- steppersB 1
-    [ ((+ 1) <$> timeB) <@ gravityE
-    , ((+ 1) <$> timeB) <@ downE
+  nextGravityB <- changingB 1
+    [ onEvent gravityE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
+    , onEvent downE    $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
     ]
 
   let fitsInFullBoard
@@ -75,14 +78,24 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         , (V2 0 0, Wild)
         , (V2 0 1, Letter 'B')
         ]
-  pieceBlocksB <- steppersB firstPieceBlocks
-    [ filterBE (flip fitsInFullBoard <$> piecePosB)
-    $ rotate <$> (pieceBlocksB <@ rotateE)
+  pieceBlocksB <- changingB firstPieceBlocks
+    [ onEvent rotateE
+    $ withBehaviour piecePosB
+    $ changeState $ \((),piecePos) -> do
+        pieceBlocks <- get
+        let pieceBlocks' = rotate pieceBlocks
+        when (fitsInFullBoard pieceBlocks' piecePos) $ do
+          put pieceBlocks'
     | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
     ]
-  piecePosB <- steppersB (V2 1 1)
-    [ filterBE (fitsInFullBoard <$> pieceBlocksB)
-    $ (+) <$> piecePosB <@> (towards dir <$ dirE)
+  piecePosB <- changingB (V2 1 1)
+    [ onEvent dirE
+    $ withBehaviour pieceBlocksB
+    $ changeState $ \((),pieceBlocks) -> do
+        piecePos <- get
+        let piecePos' = piecePos + towards dir
+        when (fitsInFullBoard pieceBlocks piecePos') $ do
+          put piecePos'
     | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
     ]
   let boardB = pure Map.empty
