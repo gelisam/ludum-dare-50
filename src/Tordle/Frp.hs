@@ -7,8 +7,8 @@ import Control.Monad (when)
 import Control.Monad.Trans.State
 import Data.Function.Extra
 import Data.Generics.Labels ()
-import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
 import Reactive.Banana.Combinators
@@ -18,21 +18,25 @@ import SDL qualified
 import SDL.Mixer qualified as Mixer
 import SDL.Video (Window)
 import SDL.Video.Renderer (Renderer)
+import System.Random (StdGen)
 import Tordle.Assets
 import Tordle.Dir
 import Tordle.Draw
 import Tordle.Model
+import Tordle.Rng
+import Tordle.Tetromino
 
 
 frpNetwork
   :: Window
   -> Renderer
   -> Assets
+  -> StdGen
   -> Event SDL.EventPayload
   -> Event Double  -- ^ time
   -> IO ()  -- ^ quit
   -> MomentIO ()
-frpNetwork window renderer assets sdlE timeE quit = mdo
+frpNetwork window renderer assets rng0 sdlE timeE quit = mdo
   let keyboardE = filterPrismE #_KeyboardEvent sdlE
   let keyPressE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Pressed)
                                . #keyboardEventKeysym
@@ -46,8 +50,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let hasKeycode  keycode  keysym = SDL.keysymKeycode  keysym == keycode
 
   -- WASD, vim-style HJKL, or simply arrow keys
-  let cwE    = () <$ filterE (anyP [                                                                                hasScancode SDL.ScancodeE]) keyPressE
-  let ccwE   = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp, hasScancode SDL.ScancodeQ]) keyPressE
+  let cwE    = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp, hasScancode SDL.ScancodeE]) keyPressE
+  let ccwE   = () <$ filterE (anyP [                                                                                hasScancode SDL.ScancodeQ]) keyPressE
   let leftE  = () <$ filterE (anyP [hasScancode SDL.ScancodeA, hasScancode SDL.ScancodeH, hasKeycode SDL.KeycodeLeft])                          keyPressE
   let downE  = () <$ filterE (anyP [hasScancode SDL.ScancodeS, hasScancode SDL.ScancodeJ, hasKeycode SDL.KeycodeDown])                          keyPressE
   let rightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])                         keyPressE
@@ -64,31 +68,27 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     ]
 
   let fitsInFullBoard
-        :: Map (V2 CInt) Label
+        :: OneSidedTetromino Label
         -> V2 CInt
         -> Bool
-      fitsInFullBoard blocks pos
+      fitsInFullBoard oneSidedTetromino pos
         = all inFullBoard
         $ Map.keys
         $ renderPiece
-        $ Piece blocks pos
-  let firstPieceBlocks = Map.fromList
-        [ (V2 (-1) (-1), Letter 'A')
-        , (V2 (-1) 0, Wild)
-        , (V2 0 0, Wild)
-        , (V2 0 1, Letter 'B')
-        ]
-  pieceBlocksB <- changingB firstPieceBlocks
+        $ Piece oneSidedTetromino pos
+  let letters = Set.fromList ['A'..'Z']
+  let (firstOneSidedTetromino, _rng1) = runState (randomOneSidedTetromino letters) rng0
+  pieceBlocksB <- changingB firstOneSidedTetromino
     [ onEvent rotateE
     $ withBehaviour piecePosB
     $ changeState $ \((),piecePos) -> do
-        pieceBlocks <- get
-        let pieceBlocks' = rotate pieceBlocks
-        when (fitsInFullBoard pieceBlocks' piecePos) $ do
-          put pieceBlocks'
+        oneSidedTetromino <- get
+        let oneSidedTetromino' = rotate oneSidedTetromino
+        when (fitsInFullBoard oneSidedTetromino' piecePos) $ do
+          put oneSidedTetromino'
     | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
     ]
-  piecePosB <- changingB (V2 1 1)
+  piecePosB <- changingB (V2 2 1)
     [ onEvent dirE
     $ withBehaviour pieceBlocksB
     $ changeState $ \((),pieceBlocks) -> do

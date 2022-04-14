@@ -19,6 +19,7 @@ library
                     , Tordle.Frp
                     , Tordle.Model
                     , Tordle.Polynomino
+                    , Tordle.Rng
                     , Tordle.Tetromino
                     , Data.Function.Extra
                     , Linear.Extra

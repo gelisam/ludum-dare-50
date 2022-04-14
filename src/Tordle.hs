@@ -11,6 +11,7 @@ import SDL.Mixer qualified as Mixer
 import SDL.Video qualified as Video
 import SDL.Video.Renderer qualified as Renderer
 import SDL.Extra
+import System.Random
 import Tordle.Assets
 import Tordle.Frp
 
@@ -35,7 +36,8 @@ main = do
             eventNetwork <- Banana.compile $ do
               sdlE <- Banana.fromAddHandler sdlPayloadAddHandler
               timeE <- Banana.fromAddHandler timeAddHandler
-              frpNetwork window renderer assets sdlE timeE quit
+              rng <- initStdGen
+              frpNetwork window renderer assets rng sdlE timeE quit
             Banana.actuate eventNetwork
             fix $ \loop -> do
               shouldQuit <- readIORef shouldQuitRef

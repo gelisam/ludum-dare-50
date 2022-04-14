@@ -8,6 +8,7 @@ import Data.Map qualified as Map
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.V2 (V2(..), _x, _y)
+import Tordle.Tetromino
 
 
 mAIN_BOARD_SIZE
@@ -61,7 +62,7 @@ data BlockStatus
 data Label
   = Letter Char
   | Wild
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Ord, Show)
 
 data Block = Block
   { blockLabel
@@ -76,23 +77,25 @@ type Board
 
 data Piece = Piece
   { pieceBlocks
-      :: Map (V2 CInt) Label
+      :: OneSidedTetromino Label
   , piecePos
       :: V2 CInt
   }
   deriving (Generic, Show)
 
 rotateLeft
-  :: Map (V2 CInt) Label
-  -> Map (V2 CInt) Label
+  :: OneSidedTetromino a
+  -> OneSidedTetromino a
 rotateLeft
-  = Map.mapKeys (\(V2 x y) -> V2 y (-x))
+  = rotateOneSidedTetromino
 
 rotateRight
-  :: Map (V2 CInt) Label
-  -> Map (V2 CInt) Label
+  :: OneSidedTetromino a
+  -> OneSidedTetromino a
 rotateRight
-  = Map.mapKeys (\(V2 x y) -> V2 (-y) x)
+  = rotateOneSidedTetromino
+  . rotateOneSidedTetromino
+  . rotateOneSidedTetromino
 
 renderPiece
   :: Piece
@@ -100,7 +103,7 @@ renderPiece
 renderPiece (Piece {..})
   = Map.fromList
       [ (piecePos + pos, Block label Falling)
-      | (pos, label) <- Map.toList pieceBlocks
+      | (pos, label) <- Map.toList $ unFreeTetromino $ runOneSidedTetromino pieceBlocks
       ]
 
 data World = World

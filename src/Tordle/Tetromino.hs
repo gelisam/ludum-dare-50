@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, ImportQualifiedPost #-}
+{-# LANGUAGE DeriveFoldable, DeriveGeneric, DeriveTraversable, ImportQualifiedPost #-}
 module Tordle.Tetromino where
 
 import Control.Lens hiding (mapping)
@@ -43,7 +43,7 @@ newtype FreeTetromino a = FreeTetromino
   { unFreeTetromino
       :: Map (V2 CInt) a
   }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
 
 mkFreeTetromino
   :: Map (V2 CInt) a
@@ -112,7 +112,7 @@ freeTetrominos
 
 newtype OneSidedTetromino a = OneSidedTetromino
   { unOneSidedTetromino
-      :: [FreeTetromino a]  -- rotations
+      :: [FreeTetromino a]  -- infinite rotations
   }
   deriving (Eq, Ord, Show)
 
@@ -123,9 +123,23 @@ mkOneSidedTetromino
 mkOneSidedTetromino
   = OneSidedTetromino
   . fmap mkFreeTetromino
-  . take 4
   . iterate (Map.mapKeys (\(V2 x y) -> V2 y (-x)))
   . unFreeTetromino
+
+runOneSidedTetromino
+  :: OneSidedTetromino a
+  -> FreeTetromino a
+runOneSidedTetromino
+  = head
+  . unOneSidedTetromino
+
+rotateOneSidedTetromino
+  :: OneSidedTetromino a
+  -> OneSidedTetromino a
+rotateOneSidedTetromino
+  = OneSidedTetromino
+  . tail
+  . unOneSidedTetromino
 
 printOneSidedTetromino
   :: OneSidedTetromino BlockType
