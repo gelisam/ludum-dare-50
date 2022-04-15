@@ -3,7 +3,7 @@
 module Tordle.Frp where
 
 import Control.Lens (filtered)
-import Control.Monad (when)
+import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import Data.Function.Extra
@@ -78,7 +78,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ Piece oneSidedTetromino pos
   let letters = Set.fromList ['A'..'Z']
   firstOneSidedTetromino <- randomOneSidedTetromino letters
-  pieceBlocksB <- changingB firstOneSidedTetromino
+  let firstPos = V2 2 1
+  oneSidedTetrominoB <- changingB firstOneSidedTetromino
     [ onEvent rotateE
     $ withBehaviour piecePosB
     $ changeState $ \((),piecePos) -> do
@@ -88,18 +89,28 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           put oneSidedTetromino'
     | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
     ]
-  piecePosB <- changingB (V2 2 1)
-    [ onEvent dirE
-    $ withBehaviour pieceBlocksB
-    $ changeState $ \((),pieceBlocks) -> do
-        piecePos <- get
-        let piecePos' = piecePos + towards dir
-        when (fitsInFullBoard pieceBlocks piecePos') $ do
-          put piecePos'
-    | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
-    ]
+  let landE
+        = givenEvent (gravityE <> downE)
+        $ withBehaviour oneSidedTetrominoB
+        $ withBehaviour piecePosB
+        $ maybeKeepIt $ \(((), oneSidedTetromino), piecePos) -> do
+            let piecePos' = piecePos + towards S
+            guard (not $ fitsInFullBoard oneSidedTetromino piecePos')
+  piecePosB <- changingB firstPos
+    ( [ onEvent landE $ setValue $ \() -> firstPos
+      ]
+   ++ [ onEvent dirE
+      $ withBehaviour oneSidedTetrominoB
+      $ changeState $ \((),oneSidedTetromino) -> do
+          piecePos <- get
+          let piecePos' = piecePos + towards dir
+          when (fitsInFullBoard oneSidedTetromino piecePos') $ do
+            put piecePos'
+      | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
+      ]
+    )
   let boardB = pure Map.empty
-  let currentPieceB = Piece <$> pieceBlocksB <*> piecePosB
+  let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
   lift $ reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [leftE, downE, rightE])
