@@ -1,7 +1,7 @@
-{-# LANGUAGE ImportQualifiedPost, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase #-}
 module Tordle.Rng where
 
-import Control.Monad.Trans.State
+import Control.Monad.State
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Traversable
@@ -11,22 +11,25 @@ import Tordle.Tetromino
 
 
 randomElement
-  :: [a]
-  -> State StdGen a
+  :: MonadState StdGen m
+  => [a]
+  -> m a
 randomElement xs = do
   i <- uniformRM (0, length xs - 1) StateGenM
   pure (xs !! i)
 
 randomLetter
-  :: Set Char
-  -> State StdGen Char
+  :: MonadState StdGen m
+  => Set Char
+  -> m Char
 randomLetter
   = randomElement
   . Set.toList
 
 randomOneSidedTetromino
-  :: Set Char
-  -> State StdGen (OneSidedTetromino Label)
+  :: MonadState StdGen m
+  => Set Char
+  -> m (OneSidedTetromino Label)
 randomOneSidedTetromino letters = do
   freeTetromino <- randomElement freeTetrominos
   labelledTetromino <- for freeTetromino $ \case

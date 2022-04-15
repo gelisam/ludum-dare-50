@@ -2,6 +2,7 @@
 module Tordle (main) where
 
 import Control.Monad (unless)
+import Control.Monad.Trans.State
 import Data.Function (fix)
 import Data.IORef
 import Foreign.C.Types (CInt)
@@ -37,7 +38,8 @@ main = do
               sdlE <- Banana.fromAddHandler sdlPayloadAddHandler
               timeE <- Banana.fromAddHandler timeAddHandler
               rng <- initStdGen
-              frpNetwork window renderer assets rng sdlE timeE quit
+              flip evalStateT rng $ do
+                frpNetwork window renderer assets sdlE timeE quit
             Banana.actuate eventNetwork
             fix $ \loop -> do
               shouldQuit <- readIORef shouldQuitRef

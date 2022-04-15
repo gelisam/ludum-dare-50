@@ -4,6 +4,7 @@ module Tordle.Frp where
 
 import Control.Lens (filtered)
 import Control.Monad (when)
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import Data.Function.Extra
 import Data.Generics.Labels ()
@@ -31,12 +32,11 @@ frpNetwork
   :: Window
   -> Renderer
   -> Assets
-  -> StdGen
   -> Event SDL.EventPayload
   -> Event Double  -- ^ time
   -> IO ()  -- ^ quit
-  -> MomentIO ()
-frpNetwork window renderer assets rng0 sdlE timeE quit = mdo
+  -> StateT StdGen MomentIO ()
+frpNetwork window renderer assets sdlE timeE quit = mdo
   let keyboardE = filterPrismE #_KeyboardEvent sdlE
   let keyPressE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Pressed)
                                . #keyboardEventKeysym
@@ -77,7 +77,7 @@ frpNetwork window renderer assets rng0 sdlE timeE quit = mdo
         $ renderPiece
         $ Piece oneSidedTetromino pos
   let letters = Set.fromList ['A'..'Z']
-  let (firstOneSidedTetromino, _rng1) = runState (randomOneSidedTetromino letters) rng0
+  firstOneSidedTetromino <- randomOneSidedTetromino letters
   pieceBlocksB <- changingB firstOneSidedTetromino
     [ onEvent rotateE
     $ withBehaviour piecePosB
@@ -101,6 +101,6 @@ frpNetwork window renderer assets rng0 sdlE timeE quit = mdo
   let boardB = pure Map.empty
   let currentPieceB = Piece <$> pieceBlocksB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
-  reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
-  reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [leftE, downE, rightE])
-  reactimate (quit <$ escE)
+  lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
+  lift $ reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [leftE, downE, rightE])
+  lift $ reactimate (quit <$ escE)

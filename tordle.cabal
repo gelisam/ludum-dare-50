@@ -32,8 +32,9 @@ library
                     , generic-lens
                     , lens
                     , linear
+                    , mtl
                     , random
-                    , reactive-banana
+                    , reactive-banana >= 1.3.0.0
                     , sdl2
                     , sdl2-gfx
                     , sdl2-ttf
