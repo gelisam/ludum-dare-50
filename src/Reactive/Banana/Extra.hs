@@ -28,42 +28,43 @@ changingB a0
   . unions
   . reverse  -- so that the last function is applied last
 
-newtype Change a b = Change
+newtype EventFun a b = EventFun
   { unChange
       :: (Event a -> Event b)
   }
 
-onEvent
-  :: Event a
-  -> Change a b
-  -> Event b
-onEvent aE (Change f)
-  = f aE
-
 withBehaviour
   :: Behavior b
-  -> Change (a, b) c
-  -> Change a c
-withBehaviour bB (Change f)
-  = Change $ \aE
+  -> EventFun (a, b) c
+  -> EventFun a c
+withBehaviour bB (EventFun f)
+  = EventFun $ \aE
  -> f (flip (,) <$> bB <@> aE)
+
+
+onEvent
+  :: Event a
+  -> EventFun a b
+  -> Event b
+onEvent aE (EventFun f)
+  = f aE
 
 changeValue
   :: ((a, b) -> b)
-  -> Change a (b -> b)
+  -> EventFun a (b -> b)
 changeValue f
-  = Change $ fmap (curry f)
+  = EventFun $ fmap (curry f)
 
 setValue
   :: (a -> b)
-  -> Change a (b -> b)
+  -> EventFun a (b -> b)
 setValue f
   = changeValue $ \(a,_)
  -> f a
 
 changeState
   :: (a -> State s ())
-  -> Change a (s -> s)
+  -> EventFun a (s -> s)
 changeState body
   = changeValue $ \(a,s0)
  -> flip execState s0
@@ -72,7 +73,7 @@ changeState body
 changeStateRandomly
   :: RandomGen g
   => (a -> StateT g (State s) ())
-  -> Change a ((g,s) -> (g,s))
+  -> EventFun a ((g,s) -> (g,s))
 changeStateRandomly body
   = changeValue $ \(a,(g0,s0))
  -> flip runState s0
@@ -82,9 +83,23 @@ changeStateRandomly body
 setValueRandomly
   :: RandomGen g
   => (a -> State g b)
-  -> Change a ((g,b) -> (g,b))
+  -> EventFun a ((g,b) -> (g,b))
 setValueRandomly body
   = changeValue $ \(a,(g0,_))
  -> swap
   $ flip runState g0
   $ body a
+
+
+givenEvent
+  :: Event a
+  -> EventFun a (Maybe a)
+  -> Event a
+givenEvent aE (EventFun f)
+  = filterJust (f aE)
+
+maybeKeepIt
+  :: (a -> Maybe b)
+  -> EventFun a (Maybe b)
+maybeKeepIt f
+  = EventFun (fmap f)
