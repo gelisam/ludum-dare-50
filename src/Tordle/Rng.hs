@@ -32,9 +32,9 @@ randomWord
 randomCompatibleWord
   :: MonadState StdGen m
   => Assets
-  -> [Maybe Char]
+  -> [Label]
   -> m (Maybe String)
-randomCompatibleWord (Assets {assetsAllWords}) maybeLetters = do
+randomCompatibleWord (Assets {assetsAllWords}) labels = do
   compatibleWords <- execWriterT $ do
     for_ assetsAllWords $ \potentialWord -> do
       when (isCompatibleWord potentialWord) $ do
@@ -46,12 +46,12 @@ randomCompatibleWord (Assets {assetsAllWords}) maybeLetters = do
       Just <$> randomElement compatibleWords
   where
     isCompatibleLetter
-      :: Maybe Char
+      :: Label
       -> Char
       -> Bool
-    isCompatibleLetter Nothing _
+    isCompatibleLetter Wild _
       = True
-    isCompatibleLetter (Just c1) c2
+    isCompatibleLetter (Letter c1) c2
       = c1 == c2
 
     isCompatibleWord
@@ -59,7 +59,7 @@ randomCompatibleWord (Assets {assetsAllWords}) maybeLetters = do
       -> Bool
     isCompatibleWord
       = all (uncurry isCompatibleLetter)
-      . zip maybeLetters
+      . zip labels
 
 randomLetter
   :: MonadState StdGen m
