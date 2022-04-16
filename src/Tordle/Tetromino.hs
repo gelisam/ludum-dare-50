@@ -116,7 +116,7 @@ newtype OneSidedTetromino a = OneSidedTetromino
   }
   deriving (Eq, Ord, Show)
 
-mkOneSidedTetromino 
+mkOneSidedTetromino
   :: Ord a
   => FreeTetromino a
   -> OneSidedTetromino a

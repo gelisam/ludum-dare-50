@@ -25,7 +25,6 @@ import Tordle.Dir
 import Tordle.Draw
 import Tordle.Model
 import Tordle.Rng
-import Tordle.Tetromino
 
 
 frpNetwork
@@ -77,14 +76,20 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
       isMoveLegal
         :: Board
-        -> OneSidedTetromino Label
-        -> V2 CInt
+        -> Piece
         -> Bool
-      isMoveLegal board oneSidedTetromino pos
+      isMoveLegal board
         = all (onBlankSpace board)
-        $ Map.keys
-        $ renderPiece
-        $ Piece oneSidedTetromino pos
+        . Map.keys
+        . renderPiece
+
+      isGameOver
+        :: Piece
+        -> Bool
+      isGameOver
+        = any (not . inMainBoard)
+        . Map.keys
+        . renderPiece
 
   let landE
         = givenEvent (gravityE <> downE)
@@ -93,7 +98,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ withBehaviour piecePosB
         $ maybeKeepIt $ \((((), board), oneSidedTetromino), piecePos) -> do
             let piecePos' = piecePos + towards S
-            guard (not $ isMoveLegal board oneSidedTetromino piecePos')
+            guard (not $ isMoveLegal board $ Piece oneSidedTetromino piecePos')
+  let gameOverE
+        = givenEvent landE
+        $ withBehaviour currentPieceB
+        $ maybeKeepIt $ \((), piece) -> do
+            guard (isGameOver piece)
 
   let letters = Set.fromList ['A'..'Z']
 
@@ -109,7 +119,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       $ changeStateOf #theValue $ \(((), board),piecePos) -> do
           oneSidedTetromino <- get
           let oneSidedTetromino' = rotate oneSidedTetromino
-          when (isMoveLegal board oneSidedTetromino' piecePos) $ do
+          when (isMoveLegal board $ Piece oneSidedTetromino' piecePos) $ do
             put oneSidedTetromino'
       | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
       ]
@@ -125,7 +135,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       $ changeState $ \(((), board),oneSidedTetromino) -> do
           piecePos <- get
           let piecePos' = piecePos + towards dir
-          when (isMoveLegal board oneSidedTetromino piecePos') $ do
+          when (isMoveLegal board $ Piece oneSidedTetromino piecePos') $ do
             put piecePos'
       | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
       ]
@@ -146,3 +156,4 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
   lift $ reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [leftE, downE, rightE])
   lift $ reactimate (quit <$ escE)
+  lift $ reactimate (quit <$ gameOverE)
