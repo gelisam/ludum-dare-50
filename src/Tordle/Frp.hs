@@ -130,7 +130,9 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     [ onEvent landE
     $ withBehaviour currentPieceB
     $ changeState $ \((), currentPiece) -> do
-        let newBlocks = renderPiece currentPiece
+        let newBlocks
+              = set (each . #blockStatus) InIncompleteWord
+              $ renderPiece currentPiece
         modify (<> newBlocks)
     ]
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
