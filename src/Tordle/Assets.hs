@@ -19,6 +19,10 @@ data Assets = Assets
       :: SoundEffect
   , assetsWhiteLetterTextures
       :: Map Char Texture
+  , assetsCommonWords
+      :: [String]
+  , assetsAllWords
+      :: [String]
   }
 
 withAssets
@@ -40,6 +44,8 @@ withAssets renderer body = do
                 | c <- ['A'..'Z']
                 ]
                 $ \whiteLetterTextures -> do
+              commonWords <- readFile "assets/common-words.txt"
+              allWords <- readFile "assets/all-words.txt"
               body $ Assets
                 { assetsBlackLetterTextures
                     = Map.fromList $ zip ['A'..'Z'] blackLetterTextures
@@ -49,4 +55,8 @@ withAssets renderer body = do
                     = moveSoundEffect
                 , assetsWhiteLetterTextures
                     = Map.fromList $ zip ['A'..'Z'] whiteLetterTextures
+                , assetsCommonWords
+                    = lines commonWords
+                , assetsAllWords
+                    = lines allWords
                 }

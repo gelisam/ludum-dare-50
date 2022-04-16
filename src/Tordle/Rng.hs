@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns #-}
 module Tordle.Rng where
 
 import Control.Monad.State
@@ -8,6 +8,7 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Traversable
 import System.Random.Stateful (StateGenM(..), StdGen, uniformRM)
+import Tordle.Assets
 import Tordle.Model
 import Tordle.Tetromino
 
@@ -20,28 +21,22 @@ randomElement xs = do
   i <- uniformRM (0, length xs - 1) StateGenM
   pure (xs !! i)
 
-randomLine
-  :: (MonadIO m, MonadState StdGen m)
-  => FilePath
-  -> m String
-randomLine filePath = do
-  s <- liftIO $ readFile filePath
-  randomElement (lines s)
-
 randomWord
-  :: (MonadIO m, MonadState StdGen m)
-  => m String
-randomWord = do
-  randomLine "assets/common-words.txt"
+  :: MonadState StdGen m
+  => Assets
+  -> m String
+randomWord
+  = randomElement
+  . assetsCommonWords
 
 randomCompatibleWord
-  :: (MonadIO m, MonadState StdGen m)
-  => [Maybe Char]
+  :: MonadState StdGen m
+  => Assets
+  -> [Maybe Char]
   -> m (Maybe String)
-randomCompatibleWord maybeLetters = do
-  s <- liftIO $ readFile "assets/all-words.txt"
+randomCompatibleWord (Assets {assetsAllWords}) maybeLetters = do
   compatibleWords <- execWriterT $ do
-    for_ (lines s) $ \potentialWord -> do
+    for_ assetsAllWords $ \potentialWord -> do
       when (isCompatibleWord potentialWord) $ do
         tell [potentialWord]
   case compatibleWords of

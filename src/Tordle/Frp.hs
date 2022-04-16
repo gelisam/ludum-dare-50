@@ -106,7 +106,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             guard (isGameOver piece)
 
   let letters = Set.fromList ['A'..'Z']
-  _goalWord <- randomWord
+  _goalWord <- randomWord assets
 
   firstOneSidedTetromino <- randomOneSidedTetromino letters
   oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
