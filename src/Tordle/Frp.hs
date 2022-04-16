@@ -19,7 +19,7 @@ import SDL qualified
 import SDL.Mixer qualified as Mixer
 import SDL.Video (Window)
 import SDL.Video.Renderer (Renderer)
-import System.Random.Stateful (StateGenM(..), StdGen, splitGenM)
+import System.Random.Stateful (StdGen)
 import Tordle.Assets
 import Tordle.Dir
 import Tordle.Draw
@@ -79,19 +79,18 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let letters = Set.fromList ['A'..'Z']
   firstOneSidedTetromino <- randomOneSidedTetromino letters
   let firstPos = V2 2 1
-  oneSidedTetrominoRng <- splitGenM StateGenM
-  oneSidedTetrominoB <- changingOfB _2 (oneSidedTetrominoRng, firstOneSidedTetromino)
-    ( [ onEvent landE $ setValueRandomly _2 _1 $ \() -> do
+  oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
+    ( [ onEvent landE $ setValueRandomly $ \() -> do
           oneSidedTetromino <- randomOneSidedTetromino letters
           pure oneSidedTetromino
       ]
    ++ [ onEvent rotateE
       $ withBehaviour piecePosB
-      $ changeState $ \((),piecePos) -> do
-          oneSidedTetromino <- zoom _2 get
+      $ changeStateOf #theValue $ \((),piecePos) -> do
+          oneSidedTetromino <- get
           let oneSidedTetromino' = rotate oneSidedTetromino
           when (fitsInFullBoard oneSidedTetromino' piecePos) $ do
-            zoom _2 $ put oneSidedTetromino'
+            put oneSidedTetromino'
       | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
       ]
     )

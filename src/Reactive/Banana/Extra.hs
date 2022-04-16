@@ -1,10 +1,12 @@
-{-# LANGUAGE ImportQualifiedPost, RankNTypes #-}
+{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, OverloadedLabels, RankNTypes #-}
 {-# OPTIONS -Wno-name-shadowing #-}
 module Reactive.Banana.Extra where
 
 import Control.Lens
-import Control.Monad.Trans.State
+import Control.Monad.State
+import Data.Generics.Labels ()
 import Data.Monoid qualified as Monoid
+import GHC.Generics (Generic)
 import Reactive.Banana.Combinators hiding (First)
 import System.Random.Stateful
 
@@ -104,17 +106,34 @@ changeStateOf ss2s body
       zoom ss2s $ do
         body a
 
+
+data ValueAndRng a = ValueAndRng
+  { theValue
+      :: a
+  , theRng
+      :: StdGen
+  }
+  deriving (Generic, Show)
+
+changingRandomlyB
+  :: ( MonadMoment m
+     , MonadState StdGen m
+     )
+  => a
+  -> [Event (ValueAndRng a -> ValueAndRng a)]
+  -> m (Behavior a)
+changingRandomlyB a0 events = do
+  rng0 <- splitGenM StateGenM
+  changingOfB #theValue (ValueAndRng a0 rng0) events
+
 setValueRandomly
-  :: RandomGen g
-  => Lens' s b
-  -> Lens' s g
-  -> (a -> State g b)
-  -> EventFun a (s -> s)
-setValueRandomly s2b s2g body
+  :: (a -> State StdGen b)
+  -> EventFun a (ValueAndRng b -> ValueAndRng b)
+setValueRandomly body
   = changeState $ \a -> do
-      b <- zoom s2g $ do
+      b <- zoom #theRng $ do
         body a
-      s2b .= b
+      #theValue .= b
 
 
 givenEvent
