@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, OverloadedLabels, RankNTypes #-}
+{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, LambdaCase, OverloadedLabels, RankNTypes #-}
 {-# OPTIONS -Wno-name-shadowing #-}
 module Reactive.Banana.Extra where
 
@@ -6,6 +6,8 @@ import Control.Lens
 import Control.Monad.State
 import Data.Generics.Labels ()
 import Data.Monoid qualified as Monoid
+import Data.Semigroup (First(..))
+import Data.These
 import GHC.Generics (Generic)
 import Reactive.Banana.Combinators hiding (First)
 import System.Random.Stateful
@@ -18,6 +20,15 @@ filterPrismE
 filterPrismE optic
   = filterJust . fmap (preview optic)
 
+-- intersects the event occurrences, so the events must be simultaneous
+apE
+  :: Event (a -> b)
+  -> Event a
+  -> Event b
+fE `apE` aE
+  = fmap (\(First f, First a) -> f a)
+  $ filterPrismE #_These
+  $ unionWith (<>) (This . First <$> fE) (That . First <$> aE)
 
 newtype EventFun a b = EventFun
   { unChange
@@ -31,6 +42,14 @@ withBehaviour
 withBehaviour bB (EventFun f)
   = EventFun $ \aE
  -> f (flip (,) <$> bB <@> aE)
+
+withSimultaneousEvent
+  :: Event b
+  -> EventFun (a, b) c
+  -> EventFun a c
+withSimultaneousEvent bE (EventFun f)
+  = EventFun $ \aE
+ -> f ((flip (,) <$> bE) `apE` aE)
 
 
 changingB
@@ -138,8 +157,8 @@ setValueRandomly body
 
 givenEvent
   :: Event a
-  -> EventFun a (Maybe a)
-  -> Event a
+  -> EventFun a (Maybe b)
+  -> Event b
 givenEvent aE (EventFun f)
   = filterJust (f aE)
 
@@ -148,3 +167,9 @@ maybeKeepIt
   -> EventFun a (Maybe b)
 maybeKeepIt f
   = EventFun (fmap f)
+
+transformIt
+  :: (a -> b)
+  -> EventFun a (Maybe b)
+transformIt f
+  = maybeKeepIt (Just . f)
