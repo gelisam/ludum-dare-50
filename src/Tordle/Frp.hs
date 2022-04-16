@@ -25,6 +25,7 @@ import System.Random.Stateful (StdGen)
 import Tordle.Assets
 import Tordle.Dir
 import Tordle.Draw
+import Tordle.Guess
 import Tordle.Model
 import Tordle.Rng
 
@@ -118,7 +119,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             guard (isGameOver piece)
 
   let letters = Set.fromList ['A'..'Z']
-  _goalWord <- randomWord assets
+  correctWord <- randomWord assets
 
   firstOneSidedTetromino <- randomOneSidedTetromino letters
   oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
@@ -174,9 +175,11 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           when (isRowComplete board y) $ do
             let getLabel x y = board ^?! ix (V2 x y) . #blockLabel
             let labels = map (flip getLabel y) xCoordinates
-            completion <- zoom #theRng $ randomCompletion assets labels
-            for_ (zip xCoordinates completion) $ \(x, letter) -> do
+            guess <- zoom #theRng $ randomCompletion assets labels
+            let status = fmap guessStatus $ analyzeGuess correctWord guess
+            for_ (zip3 xCoordinates guess status) $ \(x, letter, status) -> do
               #theValue . ix (V2 x y) . #blockLabel .= Letter letter
+              #theValue . ix (V2 x y) . #blockStatus .= status
     ]
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB

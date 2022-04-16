@@ -17,6 +17,7 @@ library
                     , Tordle.Dir
                     , Tordle.Draw
                     , Tordle.Frp
+                    , Tordle.Guess
                     , Tordle.Model
                     , Tordle.Polynomino
                     , Tordle.Rng
