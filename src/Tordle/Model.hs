@@ -27,6 +27,17 @@ fULL_BOARD_SIZE
   = mAIN_BOARD_SIZE + V2 0 aBOVE_BOARD_BUFFER
 
 
+xCoordinates
+  :: [CInt]
+xCoordinates
+  = [0 .. mAIN_BOARD_SIZE^._x - 1]
+
+allLetters
+  :: [Char]
+allLetters
+  = ['A'..'Z']
+
+
 inBoardWidth
   :: CInt
   -> Bool

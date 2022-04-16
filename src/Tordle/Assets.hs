@@ -8,6 +8,7 @@ import Data.Text qualified as Text
 import SDL (V4(..))
 import SDL.Video.Renderer (Renderer, Texture)
 import SDL.Extra
+import Tordle.Model
 
 
 data Assets = Assets
@@ -36,25 +37,25 @@ withAssets renderer body = do
         withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle" $ \titleTexture -> do
           withMultiple
               [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
-              | c <- ['A'..'Z']
+              | c <- allLetters
               ]
               $ \blackLetterTextures -> do
             withMultiple
                 [ With $ withTextTexture renderer letterFont (V4 255 255 255 255) (Text.singleton c)
-                | c <- ['A'..'Z']
+                | c <- allLetters
                 ]
                 $ \whiteLetterTextures -> do
               commonWords <- readFile "assets/common-words.txt"
               allWords <- readFile "assets/all-words.txt"
               body $ Assets
                 { assetsBlackLetterTextures
-                    = Map.fromList $ zip ['A'..'Z'] blackLetterTextures
+                    = Map.fromList $ zip allLetters blackLetterTextures
                 , assetsTitleTexture
                     = titleTexture
                 , assetsMoveSoundEffect
                     = moveSoundEffect
                 , assetsWhiteLetterTextures
-                    = Map.fromList $ zip ['A'..'Z'] whiteLetterTextures
+                    = Map.fromList $ zip allLetters whiteLetterTextures
                 , assetsCommonWords
                     = lines commonWords
                 , assetsAllWords

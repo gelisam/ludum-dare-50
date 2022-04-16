@@ -6,12 +6,14 @@ import Control.Lens
 import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import Data.Foldable
 import Data.Function.Extra
 import Data.Generics.Labels ()
+import Data.List (nub)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Foreign.C.Types (CInt)
-import Linear.V2 (V2(..))
+import Linear.V2 (V2(..), _y)
 import Reactive.Banana.Combinators
 import Reactive.Banana.Extra
 import Reactive.Banana.Frameworks
@@ -83,6 +85,16 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         . Map.keys
         . renderPiece
 
+      isRowComplete
+        :: Board
+        -> CInt
+        -> Bool
+      isRowComplete board y
+        = and
+            [ V2 x y `Map.member` board
+            | x <- xCoordinates
+            ]
+
       isGameOver
         :: Piece
         -> Bool
@@ -142,14 +154,29 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       ]
     )
 
-  boardB <- changingB Map.empty
+  boardB <- changingRandomlyB Map.empty
     [ onEvent landE
     $ withBehaviour currentPieceB
     $ changeState $ \((), currentPiece) -> do
         let newBlocks
               = set (each . #blockStatus) InIncompleteWord
               $ renderPiece currentPiece
-        modify (<> newBlocks)
+        #theValue %= (<> newBlocks)
+
+        let affectedRows
+              = nub
+              $ fmap (view _y)
+              $ Map.keys
+              $ newBlocks
+
+        board <- use #theValue
+        for_ affectedRows $ \y -> do
+          when (isRowComplete board y) $ do
+            let getLabel x y = board ^?! ix (V2 x y) . #blockLabel
+            let labels = map (flip getLabel y) xCoordinates
+            completion <- zoom #theRng $ randomCompletion assets labels
+            for_ (zip xCoordinates completion) $ \(x, letter) -> do
+              #theValue . ix (V2 x y) . #blockLabel .= Letter letter
     ]
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB

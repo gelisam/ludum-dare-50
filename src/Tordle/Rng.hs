@@ -61,6 +61,25 @@ randomCompatibleWord (Assets {assetsAllWords}) labels = do
       = all (uncurry isCompatibleLetter)
       . zip labels
 
+randomCompletion
+  :: MonadState StdGen m
+  => Assets
+  -> [Label]
+  -> m String
+randomCompletion assets labels = do
+  maybeCompletion <- randomCompatibleWord assets labels
+  case maybeCompletion of
+    Just completion -> do
+      pure completion
+    Nothing -> do
+      for labels $ \label -> do
+        case label of
+          Letter letter -> do
+            pure letter
+          Wild -> do
+            randomLetter (Set.fromList allLetters)
+
+
 randomLetter
   :: MonadState StdGen m
   => Set Char
