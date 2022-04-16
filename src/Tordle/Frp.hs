@@ -85,9 +85,19 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ Map.keys
         $ renderPiece
         $ Piece oneSidedTetromino pos
+
+  let landE
+        = givenEvent (gravityE <> downE)
+        $ withBehaviour boardB
+        $ withBehaviour oneSidedTetrominoB
+        $ withBehaviour piecePosB
+        $ maybeKeepIt $ \((((), board), oneSidedTetromino), piecePos) -> do
+            let piecePos' = piecePos + towards S
+            guard (not $ isMoveLegal board oneSidedTetromino piecePos')
+
   let letters = Set.fromList ['A'..'Z']
+
   firstOneSidedTetromino <- randomOneSidedTetromino letters
-  let firstPos = V2 2 1
   oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
     ( [ onEvent landE $ setValueRandomly $ \() -> do
           oneSidedTetromino <- randomOneSidedTetromino letters
@@ -104,6 +114,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
       ]
     )
+
+  let firstPos = V2 2 1
   piecePosB <- changingB firstPos
     ( [ onEvent landE $ setValue $ \() -> firstPos
       ]
@@ -118,14 +130,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
       ]
     )
-  let landE
-        = givenEvent (gravityE <> downE)
-        $ withBehaviour boardB
-        $ withBehaviour oneSidedTetrominoB
-        $ withBehaviour piecePosB
-        $ maybeKeepIt $ \((((), board), oneSidedTetromino), piecePos) -> do
-            let piecePos' = piecePos + towards S
-            guard (not $ isMoveLegal board oneSidedTetromino piecePos')
+
   boardB <- changingB Map.empty
     [ onEvent landE
     $ withBehaviour currentPieceB
@@ -135,6 +140,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
               $ renderPiece currentPiece
         modify (<> newBlocks)
     ]
+
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
