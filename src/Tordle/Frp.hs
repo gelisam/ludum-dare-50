@@ -2,7 +2,7 @@
 {-# OPTIONS -Wno-name-shadowing #-}
 module Tordle.Frp where
 
-import Control.Lens (filtered)
+import Control.Lens
 import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
@@ -80,18 +80,18 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   firstOneSidedTetromino <- randomOneSidedTetromino letters
   let firstPos = V2 2 1
   oneSidedTetrominoRng <- splitGenM StateGenM
-  oneSidedTetrominoB <- fmap (fmap snd) $ changingB (oneSidedTetrominoRng, firstOneSidedTetromino)
-    ( [ onEvent landE $ setValueRandomly $ \() -> do
+  oneSidedTetrominoB <- changingOfB _2 (oneSidedTetrominoRng, firstOneSidedTetromino)
+    ( [ onEvent landE $ setValueRandomly _2 _1 $ \() -> do
           oneSidedTetromino <- randomOneSidedTetromino letters
           pure oneSidedTetromino
       ]
    ++ [ onEvent rotateE
       $ withBehaviour piecePosB
-      $ changeStateRandomly $ \((),piecePos) -> lift $ do
-          oneSidedTetromino <- get
+      $ changeState $ \((),piecePos) -> do
+          oneSidedTetromino <- zoom _2 get
           let oneSidedTetromino' = rotate oneSidedTetromino
           when (fitsInFullBoard oneSidedTetromino' piecePos) $ do
-            put oneSidedTetromino'
+            zoom _2 $ put oneSidedTetromino'
       | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
       ]
     )
