@@ -57,7 +57,7 @@ data BlockStatus
   | NotInWord
   | WrongSpot
   | CorrectSpot
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Ord, Show)
 
 data Label
   = Letter Char
@@ -70,7 +70,7 @@ data Block = Block
   , blockStatus
       :: BlockStatus
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Ord, Show)
 
 type Board
   = Map (V2 CInt) Block
@@ -81,7 +81,7 @@ data Piece = Piece
   , piecePos
       :: V2 CInt
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Ord, Show)
 
 rotateLeft
   :: OneSidedTetromino a
@@ -112,4 +112,4 @@ data World = World
   , worldCurrentPiece
       :: Piece
   }
-  deriving (Generic, Show)
+  deriving (Eq, Generic, Ord, Show)

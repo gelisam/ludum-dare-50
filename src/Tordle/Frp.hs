@@ -67,12 +67,21 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     , onEvent downE    $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
     ]
 
-  let fitsInFullBoard
-        :: OneSidedTetromino Label
+  let onBlankSpace
+        :: Board
         -> V2 CInt
         -> Bool
-      fitsInFullBoard oneSidedTetromino pos
-        = all inFullBoard
+      onBlankSpace board pos
+        = inFullBoard pos
+       && Map.lookup pos board == Nothing
+
+      isMoveLegal
+        :: Board
+        -> OneSidedTetromino Label
+        -> V2 CInt
+        -> Bool
+      isMoveLegal board oneSidedTetromino pos
+        = all (onBlankSpace board)
         $ Map.keys
         $ renderPiece
         $ Piece oneSidedTetromino pos
@@ -85,11 +94,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           pure oneSidedTetromino
       ]
    ++ [ onEvent rotateE
+      $ withBehaviour boardB
       $ withBehaviour piecePosB
-      $ changeStateOf #theValue $ \((),piecePos) -> do
+      $ changeStateOf #theValue $ \(((), board),piecePos) -> do
           oneSidedTetromino <- get
           let oneSidedTetromino' = rotate oneSidedTetromino
-          when (fitsInFullBoard oneSidedTetromino' piecePos) $ do
+          when (isMoveLegal board oneSidedTetromino' piecePos) $ do
             put oneSidedTetromino'
       | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
       ]
@@ -98,23 +108,31 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     ( [ onEvent landE $ setValue $ \() -> firstPos
       ]
    ++ [ onEvent dirE
+      $ withBehaviour boardB
       $ withBehaviour oneSidedTetrominoB
-      $ changeState $ \((),oneSidedTetromino) -> do
+      $ changeState $ \(((), board),oneSidedTetromino) -> do
           piecePos <- get
           let piecePos' = piecePos + towards dir
-          when (fitsInFullBoard oneSidedTetromino piecePos') $ do
+          when (isMoveLegal board oneSidedTetromino piecePos') $ do
             put piecePos'
       | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
       ]
     )
   let landE
         = givenEvent (gravityE <> downE)
+        $ withBehaviour boardB
         $ withBehaviour oneSidedTetrominoB
         $ withBehaviour piecePosB
-        $ maybeKeepIt $ \(((), oneSidedTetromino), piecePos) -> do
+        $ maybeKeepIt $ \((((), board), oneSidedTetromino), piecePos) -> do
             let piecePos' = piecePos + towards S
-            guard (not $ fitsInFullBoard oneSidedTetromino piecePos')
-  let boardB = pure Map.empty
+            guard (not $ isMoveLegal board oneSidedTetromino piecePos')
+  boardB <- changingB Map.empty
+    [ onEvent landE
+    $ withBehaviour currentPieceB
+    $ changeState $ \((), currentPiece) -> do
+        let newBlocks = renderPiece currentPiece
+        modify (<> newBlocks)
+    ]
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
