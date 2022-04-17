@@ -1,3 +1,6 @@
+"Tordle", a game by Samuel Gélineau
+inspired by Tetris and Wordle
+
 clear-sans.regular.ttf:
   from https://www.1001fonts.com/clear-sans-font.html
   Font software Copyright © 2012 Intel Corporation.
