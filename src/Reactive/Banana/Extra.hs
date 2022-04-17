@@ -30,6 +30,7 @@ fE `apE` aE
   $ filterPrismE #_These
   $ unionWith (<>) (This . First <$> fE) (That . First <$> aE)
 
+
 newtype EventFun a b = EventFun
   { unChange
       :: (Event a -> Event b)

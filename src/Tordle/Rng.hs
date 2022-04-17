@@ -21,12 +21,20 @@ randomElement xs = do
   i <- uniformRM (0, length xs - 1) StateGenM
   pure (xs !! i)
 
+randomMember
+  :: (MonadState StdGen m, Ord a)
+  => Set a
+  -> m a
+randomMember xs = do
+  i <- uniformRM (0, Set.size xs - 1) StateGenM
+  pure (Set.elemAt i xs)
+
 randomWord
   :: MonadState StdGen m
   => Assets
   -> m String
 randomWord
-  = randomElement
+  = randomMember
   . assetsCommonWords
 
 randomCompatibleWord

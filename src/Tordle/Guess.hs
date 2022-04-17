@@ -1,8 +1,10 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, NamedFieldPuns #-}
 module Tordle.Guess where
 
 import Data.List (delete)
+import Data.Set qualified as Set
 import GHC.Generics (Generic)
+import Tordle.Assets
 import Tordle.Model
 
 
@@ -14,6 +16,13 @@ data GuessResult
 
 type Coloring
   = [GuessResult]
+
+isRealWord
+  :: Assets
+  -> String
+  -> Bool
+isRealWord (Assets {assetsAllWords}) guess
+  = guess `Set.member` assetsAllWords
 
 analyzeGuess
   :: [Char]  -- ^ correct word

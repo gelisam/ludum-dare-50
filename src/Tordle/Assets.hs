@@ -4,6 +4,8 @@ module Tordle.Assets where
 import Data.Function.Extra (With(..), withMultiple)
 import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Text qualified as Text
 import SDL (V4(..))
 import SDL.Video.Renderer (Renderer, Texture)
@@ -21,9 +23,9 @@ data Assets = Assets
   , assetsWhiteLetterTextures
       :: Map Char Texture
   , assetsCommonWords
-      :: [String]
+      :: Set String
   , assetsAllWords
-      :: [String]
+      :: Set String
   }
 
 withAssets
@@ -57,7 +59,7 @@ withAssets renderer body = do
                 , assetsWhiteLetterTextures
                     = Map.fromList $ zip allLetters whiteLetterTextures
                 , assetsCommonWords
-                    = lines commonWords
+                    = Set.fromList $ lines commonWords
                 , assetsAllWords
-                    = lines allWords
+                    = Set.fromList $ lines allWords
                 }
