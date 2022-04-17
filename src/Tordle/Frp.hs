@@ -9,6 +9,7 @@ import Control.Monad.Trans.State
 import Data.Foldable
 import Data.Function.Extra
 import Data.Generics.Labels ()
+import Data.List.Extra (mconcatMap)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Traversable
@@ -145,13 +146,29 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt
         $ fmap (analyzeGuess correctWord)
 
-  let letters = Set.fromList ['A'..'Z']
+  let eliminatedLettersE
+        = givenEvent guessesE
+        $ withSimultaneousEvent coloringsE
+        $ transformIt $ \(guesses, colorings)
+       -> flip mconcatMap (zip guesses colorings) $ \(guess, coloring)
+       -> flip mconcatMap (zip guess coloring) $ \(letter, guessResult)
+       -> Set.fromList
+            [ letter
+            | guessResult == Grey
+            ]
+  remainingLettersB <- changingB (Set.fromList allLetters)
+    [ onEvent eliminatedLettersE
+    $ changeValue $ \(eliminatedLetters, letters)
+   -> letters Set.\\ eliminatedLetters
+    ]
   correctWord <- randomWord assets
 
-  firstOneSidedTetromino <- randomOneSidedTetromino letters
+  firstOneSidedTetromino <- randomOneSidedTetromino (Set.fromList allLetters)
   oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
-    ( [ onEvent landE $ setValueRandomly $ \() -> do
-          oneSidedTetromino <- randomOneSidedTetromino letters
+    ( [ onEvent landE
+      $ withBehaviour remainingLettersB
+      $ setValueRandomly $ \((), remainingLetters) -> do
+          oneSidedTetromino <- randomOneSidedTetromino remainingLetters
           pure oneSidedTetromino
       ]
    ++ [ onEvent rotateE
