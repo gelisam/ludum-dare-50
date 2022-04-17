@@ -7,7 +7,6 @@ import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import Data.Foldable
-import Data.Function.Extra
 import Data.Generics.Labels ()
 import Data.List.Extra (mconcatMap)
 import Data.Map qualified as Map
@@ -50,15 +49,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                                  . #keyboardEventKeysym
                                  )
                                  keyboardE
-  let hasScancode scancode keysym = SDL.keysymScancode keysym == scancode
-  let hasKeycode  keycode  keysym = SDL.keysymKeycode  keysym == keycode
+  let hasKeycode  keycode  keysym = SDL.keysymKeycode keysym == keycode
 
-  -- WASD, vim-style HJKL, or simply arrow keys
-  let keyCwE    = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp, hasScancode SDL.ScancodeE]) keyPressE
-  let keyCcwE   = () <$ filterE (anyP [                                                                                hasScancode SDL.ScancodeQ]) keyPressE
-  let keyLeftE  = () <$ filterE (anyP [hasScancode SDL.ScancodeA, hasScancode SDL.ScancodeH, hasKeycode SDL.KeycodeLeft])                          keyPressE
-  let keyDownE  = () <$ filterE (anyP [hasScancode SDL.ScancodeS, hasScancode SDL.ScancodeJ, hasKeycode SDL.KeycodeDown])                          keyPressE
-  let keyRightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])                         keyPressE
+  let keyUpE    = () <$ filterE (hasKeycode SDL.KeycodeUp) keyPressE
+  let keyLeftE  = () <$ filterE (hasKeycode SDL.KeycodeLeft) keyPressE
+  let keyDownE  = () <$ filterE (hasKeycode SDL.KeycodeDown) keyPressE
+  let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
   let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
   let disableMovementE
@@ -70,9 +66,9 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     , onEvent enableMovementE  $ setValue $ \() -> True
     ]
   let tryRotateClockwiseE
-        = whenE canMoveB keyCwE
+        = whenE canMoveB keyUpE
       tryRotateCounterclockwiseE
-        = whenE canMoveB keyCcwE
+        = never
       tryMoveLeftE
         = whenE canMoveB keyLeftE
       tryMoveRightE
