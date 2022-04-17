@@ -86,6 +86,63 @@ data Block = Block
 type Board
   = Map (V2 CInt) Block
 
+moveAllRows
+  :: Map CInt CInt  -- from/to; no duplicated to's, missing rows are deleted
+  -> Board
+  -> Board
+moveAllRows moves board
+  = Map.fromList
+      [ (V2 x y', block)
+      | (V2 x y, block) <- Map.toList board
+      , Just y' <- [Map.lookup y moves]
+      ]
+
+data RowAction
+  = DeleteRow
+  | MoveRowToBottom
+  deriving (Eq, Generic, Ord, Show)
+
+performRowActions
+  :: Map CInt RowAction
+  -> Board
+  -> Board
+performRowActions rowActions
+  = moveAllRows
+  $ Map.fromList
+  $ fst
+  $ go aBOVE_BOARD_BUFFER []
+  where
+    maxY
+      :: CInt
+    maxY
+      = fULL_BOARD_SIZE^._y - 1
+
+    go
+      :: CInt              -- row 'y' to consider next
+      -> [CInt]            -- rows to be appended at the end
+      -> ( [(CInt, CInt)]  -- destinations for rows 'y' and below
+         , CInt            -- delta to apply to rows above 'y'
+         )
+    go y bottom
+      | y > maxY
+        = case bottom of
+            []
+              -> ([], 0)
+            z:zs
+              -> let (moves, dy) = go y zs
+              in ((z, maxY + dy) : moves, dy-1)
+      | otherwise
+        = case Map.lookup y rowActions of
+            Nothing
+              -> let (moves, dy) = go (y+1) bottom
+              in ((y, y + dy) : moves, dy)
+            Just DeleteRow
+              -> let (moves, dy) = go (y+1) bottom
+              in (moves, dy+1)
+            Just MoveRowToBottom
+              -> let (moves, dy) = go (y+1) (bottom ++ [y])
+              in (moves, dy+1)
+
 data Piece = Piece
   { pieceBlocks
       :: OneSidedTetromino Label

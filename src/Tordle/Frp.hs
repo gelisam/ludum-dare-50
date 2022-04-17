@@ -222,8 +222,17 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             for_ (zip completedRows colorings) $ \(y, guessResults) -> do
               for_ (zip [0..] guessResults) $ \(x, guessResult) -> do
                 ix (V2 x y) . #blockStatus .= guessStatus guessResult
+  let boardWithReorderedRowsE
+        = givenEvent completedRowsE
+        $ withSimultaneousEvent guessesE
+        $ withSimultaneousEvent boardWithColoredBlocksE
+        $ transformIt $ \((completedRows, guesses), board)
+       -> flip performRowActions board
+        $ Map.fromList
+        $ flip fmap (zip completedRows guesses) $ \(y, guess)
+       -> (y, if isRealWord assets guess then MoveRowToBottom else DeleteRow)
   boardB <- changingB Map.empty
-    [ onEvent boardWithColoredBlocksE
+    [ onEvent boardWithReorderedRowsE
     $ setValue id
     ]
 
