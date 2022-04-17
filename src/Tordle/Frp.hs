@@ -11,6 +11,7 @@ import Data.Function.Extra
 import Data.Generics.Labels ()
 import Data.List.Extra (mconcatMap)
 import Data.Map qualified as Map
+import Data.Set ((\\))
 import Data.Set qualified as Set
 import Data.Traversable
 import Foreign.C.Types (CInt)
@@ -174,15 +175,21 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ withSimultaneousEvent coloringsE
         $ transformIt $ \(guesses, colorings)
        -> flip mconcatMap (zip guesses colorings) $ \(guess, coloring)
-       -> flip mconcatMap (zip guess coloring) $ \(letter, guessResult)
-       -> Set.fromList
-            [ letter
-            | guessResult == Grey
-            ]
+       -> let greyLetters
+                = Set.fromList
+                    [ letter
+                    | (letter, Grey) <- zip guess coloring
+                    ]
+       in let yellowLetters
+                = Set.fromList
+                    [ letter
+                    | (letter, Yellow) <- zip guess coloring
+                    ]
+       in greyLetters \\ yellowLetters
   remainingLettersB <- changingB (Set.fromList allLetters)
     [ onEvent eliminatedLettersE
     $ changeValue $ \(eliminatedLetters, letters)
-   -> letters Set.\\ eliminatedLetters
+   -> letters \\ eliminatedLetters
     ]
   correctWord <- randomWord assets
 
