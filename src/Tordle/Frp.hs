@@ -53,21 +53,44 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let hasKeycode  keycode  keysym = SDL.keysymKeycode  keysym == keycode
 
   -- WASD, vim-style HJKL, or simply arrow keys
-  let cwE    = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp, hasScancode SDL.ScancodeE]) keyPressE
-  let ccwE   = () <$ filterE (anyP [                                                                                hasScancode SDL.ScancodeQ]) keyPressE
-  let leftE  = () <$ filterE (anyP [hasScancode SDL.ScancodeA, hasScancode SDL.ScancodeH, hasKeycode SDL.KeycodeLeft])                          keyPressE
-  let downE  = () <$ filterE (anyP [hasScancode SDL.ScancodeS, hasScancode SDL.ScancodeJ, hasKeycode SDL.KeycodeDown])                          keyPressE
-  let rightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])                         keyPressE
-  let escE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
+  let keyCwE    = () <$ filterE (anyP [hasScancode SDL.ScancodeW, hasScancode SDL.ScancodeK, hasKeycode SDL.KeycodeUp, hasScancode SDL.ScancodeE]) keyPressE
+  let keyCcwE   = () <$ filterE (anyP [                                                                                hasScancode SDL.ScancodeQ]) keyPressE
+  let keyLeftE  = () <$ filterE (anyP [hasScancode SDL.ScancodeA, hasScancode SDL.ScancodeH, hasKeycode SDL.KeycodeLeft])                          keyPressE
+  let keyDownE  = () <$ filterE (anyP [hasScancode SDL.ScancodeS, hasScancode SDL.ScancodeJ, hasKeycode SDL.KeycodeDown])                          keyPressE
+  let keyRightE = () <$ filterE (anyP [hasScancode SDL.ScancodeD, hasScancode SDL.ScancodeL, hasKeycode SDL.KeycodeRight])                         keyPressE
+  let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
+
+  let disableMovementE
+        = gameOverE
+      enableMovementE
+        = never
+  canMoveB <- changingB True
+    [ onEvent disableMovementE $ setValue $ \() -> False
+    , onEvent enableMovementE  $ setValue $ \() -> True
+    ]
+  let tryRotateClockwiseE
+        = whenE canMoveB keyCwE
+      tryRotateCounterclockwiseE
+        = whenE canMoveB keyCcwE
+      tryMoveLeftE
+        = whenE canMoveB keyLeftE
+      tryMoveRightE
+        = whenE canMoveB keyRightE
+      userTriesToMoveDownE
+        = whenE canMoveB keyDownE
+      gravityE
+        = whenE canMoveB gravityTickE
+      tryMoveDownE
+        = userTriesToMoveDownE <> gravityE
 
   timeB <- stepper 0 timeE
-  let gravityE
+  let gravityTickE
         = fmap (const ())
         $ filterE id
-        $ (<=) <$> nextGravityB <@> timeE
-  nextGravityB <- changingB 1
-    [ onEvent gravityE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    , onEvent downE    $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
+        $ (<=) <$> nextGravityTickB <@> timeE
+  nextGravityTickB <- changingB 1
+    [ onEvent userTriesToMoveDownE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
+    , onEvent gravityTickE         $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
     ]
 
   let onBlankSpace
@@ -105,7 +128,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         . Map.keys
 
   let landE
-        = givenEvent (gravityE <> downE)
+        = givenEvent tryMoveDownE
         $ withBehaviour boardB
         $ withBehaviour oneSidedTetrominoB
         $ withBehaviour piecePosB
@@ -179,7 +202,10 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           let oneSidedTetromino' = rotate oneSidedTetromino
           when (isMoveLegal board $ Piece oneSidedTetromino' piecePos) $ do
             put oneSidedTetromino'
-      | (rotate, rotateE) <- [(rotateLeft, ccwE), (rotateRight, cwE)]
+      | (rotate, rotateE) <-
+          [ (rotateLeft, tryRotateCounterclockwiseE)
+          , (rotateRight, tryRotateClockwiseE)
+          ]
       ]
     )
 
@@ -195,7 +221,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           let piecePos' = piecePos + towards dir
           when (isMoveLegal board $ Piece oneSidedTetromino piecePos') $ do
             put piecePos'
-      | (dir, dirE) <- [(E, rightE), (W, leftE), (S, downE), (S, gravityE)]
+      | (dir, dirE) <- [(E, tryMoveRightE), (W, tryMoveLeftE), (S, tryMoveDownE)]
       ]
     )
 
@@ -244,6 +270,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
-  lift $ reactimate (Mixer.play (assetsMoveSoundEffect assets) <$ mconcat [leftE, downE, rightE])
-  lift $ reactimate (quit <$ escE)
-  lift $ reactimate (quit <$ gameOverE)
+  lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)
+                   <$ mconcat [tryMoveLeftE, tryMoveRightE, userTriesToMoveDownE]
+                    )
+  lift $ reactimate (quit <$ keyEscE)
