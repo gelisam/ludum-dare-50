@@ -126,7 +126,7 @@ drawBoard renderer assets board center = do
   let topLeft
         :: Pos
       topLeft
-        = center - half ((fULL_BOARD_SIZE - 1) * bLOCK_STRIDE)
+        = center - half ((pHANTOM_BOARD_SIZE - 1) * bLOCK_STRIDE)
   for_ [0..fULL_BOARD_SIZE^._y - 1] $ \j -> do
     for_ [0..fULL_BOARD_SIZE^._x -1] $ \i -> do
       let ij
@@ -157,6 +157,8 @@ presentWorld window renderer assets (World {..}) = do
           -> assetsGameOverTexture assets
         Win
           -> assetsWinTexture assets
-  drawCenteredTexture renderer bigTextTexture (V2 (windowSize^._x `div` 2) 50)
-  drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard) (half windowSize)
+  drawCenteredTexture renderer bigTextTexture
+    (V2 (1 * windowSize^._x `div` 4) (1 * windowSize^._y `div` 3))
+  drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard)
+    (V2 (2 * windowSize^._x `div` 3) (windowSize^._y `div` 2))
   Renderer.present renderer

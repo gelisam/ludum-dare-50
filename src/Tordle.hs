@@ -6,6 +6,7 @@ import Control.Monad.Trans.State
 import Data.Function (fix)
 import Data.IORef
 import Foreign.C.Types (CInt)
+import Linear (V2(..))
 import Reactive.Banana.Frameworks qualified as Banana
 import SDL qualified
 import SDL.Mixer qualified as Mixer
@@ -23,7 +24,14 @@ main = do
   SDL.initializeAll
   withTTF $ do
     Mixer.withAudio Mixer.defaultAudio 1024 $ do
-      withWindow "Tordle" Video.defaultWindow $ \window -> do
+      let windowConfig
+            :: Video.WindowConfig
+          windowConfig
+            = Video.defaultWindow
+            { Video.windowInitialSize
+                = V2 800 800
+            }
+      withWindow "Tordle" windowConfig $ \window -> do
         withRenderer window 0 Renderer.defaultRenderer $ \renderer -> do
           withAssets renderer $ \assets -> do
             time0 <- SDL.time

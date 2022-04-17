@@ -14,7 +14,7 @@ import Tordle.Tetromino
 mAIN_BOARD_SIZE
   :: V2 CInt
 mAIN_BOARD_SIZE
-  = V2 5 6
+  = V2 5 12
 
 aBOVE_BOARD_BUFFER
   :: CInt
@@ -25,6 +25,11 @@ fULL_BOARD_SIZE
   :: V2 CInt
 fULL_BOARD_SIZE
   = mAIN_BOARD_SIZE + V2 0 aBOVE_BOARD_BUFFER
+
+pHANTOM_BOARD_SIZE
+  :: V2 CInt
+pHANTOM_BOARD_SIZE
+  = fULL_BOARD_SIZE + V2 0 (aBOVE_BOARD_BUFFER - 2)
 
 
 xCoordinates
