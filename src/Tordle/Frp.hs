@@ -77,22 +77,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = whenE canMoveB keyLeftE
       tryMoveRightE
         = whenE canMoveB keyRightE
-      userTriesToMoveDownE
-        = whenE canMoveB keyDownE
-      gravityE
-        = whenE canMoveB gravityTickE
       tryMoveDownE
-        = userTriesToMoveDownE <> gravityE
-
-  timeB <- stepper 0 timeE
-  let gravityTickE
-        = fmap (const ())
-        $ filterE id
-        $ (<=) <$> nextGravityTickB <@> timeE
-  nextGravityTickB <- changingB 1
-    [ onEvent userTriesToMoveDownE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    , onEvent gravityTickE         $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    ]
+        = whenE canMoveB keyDownE
 
   let onBlankSpace
         :: Board
@@ -282,7 +268,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
 
   lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)
-                   <$ mconcat [tryMoveLeftE, tryMoveRightE, userTriesToMoveDownE]
+                   <$ mconcat [tryMoveLeftE, tryMoveRightE, tryMoveDownE]
                     )
   lift $ reactimate ( Mixer.play (assetsGameOverSoundEffect assets)
                    <$ gameOverE
