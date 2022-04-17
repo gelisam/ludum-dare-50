@@ -2,3 +2,5 @@ clear-sans.regular.ttf:
   from https://www.1001fonts.com/clear-sans-font.html
   Font software Copyright © 2012 Intel Corporation.
   Licensed under the Apache License, Version 2.0. www.apache.org/licenses/LICENSE-2.0
+
+all sounds made using https://jfxr.frozenfractal.com
