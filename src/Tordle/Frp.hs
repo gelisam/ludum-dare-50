@@ -104,6 +104,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   nextGravityTickB <- changingB 1
     [ onEvent userTriesToMoveDownE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
     , onEvent gravityTickE         $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
+    , onEvent switchToPlaceE       $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
     ]
 
   let onBlankSpace
