@@ -68,6 +68,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = () <$ pickLetterE
       switchToEndScreenE
         = gameOverE
+       <> winE
   canGuessB <- changingB True
     [ onEvent switchToGuessE     $ setValue $ \() -> True
     , onEvent switchToPlaceE     $ setValue $ \() -> False
@@ -265,8 +266,13 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = givenEvent landingBlocksE
         $ maybeKeepIt $ \landingBlocks -> do
             guard (isGameOver landingBlocks)
+  let winE
+        = givenEvent coloringsE
+        $ maybeKeepIt $ \colorings -> do
+            guard $ any (all (== Green)) colorings
   worldStatusB <- changingB Guessing
     [ onEvent gameOverE $ setValue $ \() -> GameOver
+    , onEvent winE      $ setValue $ \() -> Win
     ]
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
