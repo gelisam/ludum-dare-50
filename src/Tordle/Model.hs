@@ -180,7 +180,8 @@ renderPiece (Piece {..})
       ]
 
 data WorldStatus
-  = Playing
+  = Guessing
+  | Placing
   | GameOver
   | Win
   deriving (Eq, Generic, Ord, Show)

@@ -46,14 +46,15 @@ withAssets renderer body = do
           withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle" $ \titleTexture -> do
             withTextTexture renderer titleFont (V4 0 0 0 255) "Game Over" $ \gameOverTexture -> do
               withTextTexture renderer titleFont (V4 0 0 0 255) "Congratulations!" $ \winTexture -> do
+                let allChars = '?' : allLetters
                 withMultiple
                     [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
-                    | c <- allLetters
+                    | c <- allChars
                     ]
                     $ \blackLetterTextures -> do
                   withMultiple
                       [ With $ withTextTexture renderer letterFont (V4 255 255 255 255) (Text.singleton c)
-                      | c <- allLetters
+                      | c <- allChars
                       ]
                       $ \whiteLetterTextures -> do
                     commonWords <- readFile "assets/common-words.txt"
@@ -66,9 +67,9 @@ withAssets renderer body = do
                       , assetsWinTexture
                           = winTexture
                       , assetsBlackLetterTextures
-                          = Map.fromList $ zip allLetters blackLetterTextures
+                          = Map.fromList $ zip allChars blackLetterTextures
                       , assetsWhiteLetterTextures
-                          = Map.fromList $ zip allLetters whiteLetterTextures
+                          = Map.fromList $ zip allChars whiteLetterTextures
                       , assetsMoveSoundEffect
                           = moveSoundEffect
                       , assetsGameOverSoundEffect

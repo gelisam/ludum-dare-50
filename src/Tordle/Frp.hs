@@ -6,11 +6,10 @@ import Control.Lens
 import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
+import Data.Char qualified as Char
 import Data.Foldable
 import Data.Generics.Labels ()
-import Data.List.Extra (mconcatMap)
 import Data.Map qualified as Map
-import Data.Set ((\\))
 import Data.Set qualified as Set
 import Data.Traversable
 import Foreign.C.Types (CInt)
@@ -50,31 +49,47 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                                  )
                                  keyboardE
   let hasKeycode  keycode  keysym = SDL.keysymKeycode keysym == keycode
-
   let keyUpE    = () <$ filterE (hasKeycode SDL.KeycodeUp) keyPressE
   let keyLeftE  = () <$ filterE (hasKeycode SDL.KeycodeLeft) keyPressE
   let keyDownE  = () <$ filterE (hasKeycode SDL.KeycodeDown) keyPressE
   let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
   let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
-  let disableMovementE
+  let keyLetterE
+        = givenEvent keyPressE
+        $ maybeKeepIt $ \keysym -> do
+            let keycode = fromIntegral $ SDL.unwrapKeycode $ SDL.keysymKeycode keysym
+            guard (keycode >= Char.ord 'a' && keycode <= Char.ord 'z')
+            pure $ Char.toUpper $ Char.chr keycode
+
+  let switchToGuessE
+        = landE
+      switchToPlaceE
+        = () <$ pickLetterE
+      switchToEndScreenE
         = gameOverE
-      enableMovementE
-        = never
-  canMoveB <- changingB True
-    [ onEvent disableMovementE $ setValue $ \() -> False
-    , onEvent enableMovementE  $ setValue $ \() -> True
+  canGuessB <- changingB True
+    [ onEvent switchToGuessE     $ setValue $ \() -> True
+    , onEvent switchToPlaceE     $ setValue $ \() -> False
+    , onEvent switchToEndScreenE $ setValue $ \() -> False
     ]
-  let tryRotateClockwiseE
-        = whenE canMoveB keyUpE
+  canPlaceB <- changingB False
+    [ onEvent switchToGuessE     $ setValue $ \() -> False
+    , onEvent switchToPlaceE     $ setValue $ \() -> True
+    , onEvent switchToEndScreenE $ setValue $ \() -> False
+    ]
+  let pickLetterE
+        = whenE canGuessB keyLetterE
+      tryRotateClockwiseE
+        = whenE canPlaceB keyUpE
       tryRotateCounterclockwiseE
         = never
       tryMoveLeftE
-        = whenE canMoveB keyLeftE
+        = whenE canPlaceB keyLeftE
       tryMoveRightE
-        = whenE canMoveB keyRightE
+        = whenE canPlaceB keyRightE
       tryMoveDownE
-        = whenE canMoveB keyDownE
+        = whenE canPlaceB keyDownE
 
   let onBlankSpace
         :: Board
@@ -152,36 +167,17 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt
         $ fmap (analyzeGuess correctWord)
 
-  let eliminatedLettersE
-        = givenEvent guessesE
-        $ withSimultaneousEvent coloringsE
-        $ transformIt $ \(guesses, colorings)
-       -> flip mconcatMap (zip guesses colorings) $ \(guess, coloring)
-       -> let greyLetters
-                = Set.fromList
-                    [ letter
-                    | (letter, Grey) <- zip guess coloring
-                    ]
-       in let yellowLetters
-                = Set.fromList
-                    [ letter
-                    | (letter, Yellow) <- zip guess coloring
-                    ]
-       in greyLetters \\ yellowLetters
-  remainingLettersB <- changingB (Set.fromList allLetters)
-    [ onEvent eliminatedLettersE
-    $ changeValue $ \(eliminatedLetters, letters)
-   -> letters \\ eliminatedLetters
-    ]
   correctWord <- randomWord assets
 
-  firstOneSidedTetromino <- randomOneSidedTetromino (Set.fromList allLetters)
+  firstOneSidedTetromino <- randomOneSidedTetromino '?'
   oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
     ( [ onEvent landE
-      $ withBehaviour remainingLettersB
-      $ setValueRandomly $ \((), remainingLetters) -> do
-          oneSidedTetromino <- randomOneSidedTetromino remainingLetters
+      $ setValueRandomly $ \() -> do
+          oneSidedTetromino <- randomOneSidedTetromino '?'
           pure oneSidedTetromino
+      , onEvent pickLetterE
+      $ changeStateOf #theValue $ \letter -> do
+          mapped . #_Letter .= letter
       ]
    ++ [ onEvent rotateE
       $ withBehaviour boardB
@@ -255,7 +251,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = givenEvent landingBlocksE
         $ maybeKeepIt $ \landingBlocks -> do
             guard (isGameOver landingBlocks)
-  worldStatusB <- changingB Playing
+  worldStatusB <- changingB Guessing
     [ onEvent gameOverE $ setValue $ \() -> GameOver
     ]
 

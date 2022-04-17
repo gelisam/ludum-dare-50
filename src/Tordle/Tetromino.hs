@@ -114,7 +114,7 @@ newtype OneSidedTetromino a = OneSidedTetromino
   { unOneSidedTetromino
       :: [FreeTetromino a]  -- infinite rotations
   }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
 
 mkOneSidedTetromino
   :: Ord a

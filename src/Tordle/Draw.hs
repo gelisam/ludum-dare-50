@@ -151,12 +151,11 @@ presentWorld window renderer assets (World {..}) = do
   Renderer.rendererDrawColor renderer $= V4 255 255 255 255
   Renderer.clear renderer
   let bigTextTexture = case worldStatus of
-        Playing
-          -> assetsTitleTexture assets
         GameOver
           -> assetsGameOverTexture assets
         Win
           -> assetsWinTexture assets
+        _ -> assetsTitleTexture assets
   drawCenteredTexture renderer bigTextTexture
     (V2 (1 * windowSize^._x `div` 4) (1 * windowSize^._y `div` 3))
   drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard)

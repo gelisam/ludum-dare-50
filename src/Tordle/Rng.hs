@@ -98,14 +98,13 @@ randomLetter
 
 randomOneSidedTetromino
   :: MonadState StdGen m
-  => Set Char
+  => Char
   -> m (OneSidedTetromino Label)
-randomOneSidedTetromino letters = do
+randomOneSidedTetromino letter = do
   freeTetromino <- randomElement freeTetrominos
   labelledTetromino <- for freeTetromino $ \case
     Unlabelled -> do
       pure Wild
     Labelled -> do
-      letter <- randomLetter letters
       pure $ Letter letter
   pure $ mkOneSidedTetromino labelledTetromino
