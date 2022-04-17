@@ -118,15 +118,6 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt $ \((), piece)
        -> set (each . #blockStatus) InIncompleteWord
         $ renderPiece piece
-  let gameOverE
-        = givenEvent landingBlocksE
-        $ maybeKeepIt $ \landingBlocks -> do
-            guard (isGameOver landingBlocks)
-  let boardWithWildBlocksE
-        = givenEvent landingBlocksE
-        $ withBehaviour boardB
-        $ transformIt $ \(landingBlocks, board)
-       -> board <> landingBlocks
   let completedRowsE
         :: Event [CInt]
       completedRowsE
@@ -139,6 +130,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ fmap (view _y)
         $ Map.keys
         $ landingBlocks
+
   guessesE <- changingRandomlyE undefined
     [ onEvent completedRowsE
     $ withSimultaneousEvent boardWithWildBlocksE
@@ -148,28 +140,10 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           let labels = map (flip getLabel y) xCoordinates
           randomCompletion assets labels
     ]
-  let boardWithLetterBlocksE
-        = givenEvent completedRowsE
-        $ withSimultaneousEvent guessesE
-        $ withSimultaneousEvent boardWithWildBlocksE
-        $ transformIt $ \((completedRows, guesses), board)
-       -> flip execState board $ do
-            for_ (zip completedRows guesses) $ \(y, guess) -> do
-              for_ (zip [0..] guess) $ \(x, letter) -> do
-                ix (V2 x y) . #blockLabel .= Letter letter
   let coloringsE
         = givenEvent guessesE
         $ transformIt
         $ fmap (analyzeGuess correctWord)
-  let boardWithColoredBlocksE
-        = givenEvent completedRowsE
-        $ withSimultaneousEvent coloringsE
-        $ withSimultaneousEvent boardWithLetterBlocksE
-        $ transformIt $ \((completedRows, colorings), board)
-       -> flip execState board $ do
-            for_ (zip completedRows colorings) $ \(y, guessResults) -> do
-              for_ (zip [0..] guessResults) $ \(x, guessResult) -> do
-                ix (V2 x y) . #blockStatus .= guessStatus guessResult
 
   let letters = Set.fromList ['A'..'Z']
   correctWord <- randomWord assets
@@ -208,10 +182,38 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
       ]
     )
 
+  let boardWithWildBlocksE
+        = givenEvent landingBlocksE
+        $ withBehaviour boardB
+        $ transformIt $ \(landingBlocks, board)
+       -> board <> landingBlocks
+  let boardWithLetterBlocksE
+        = givenEvent completedRowsE
+        $ withSimultaneousEvent guessesE
+        $ withSimultaneousEvent boardWithWildBlocksE
+        $ transformIt $ \((completedRows, guesses), board)
+       -> flip execState board $ do
+            for_ (zip completedRows guesses) $ \(y, guess) -> do
+              for_ (zip [0..] guess) $ \(x, letter) -> do
+                ix (V2 x y) . #blockLabel .= Letter letter
+  let boardWithColoredBlocksE
+        = givenEvent completedRowsE
+        $ withSimultaneousEvent coloringsE
+        $ withSimultaneousEvent boardWithLetterBlocksE
+        $ transformIt $ \((completedRows, colorings), board)
+       -> flip execState board $ do
+            for_ (zip completedRows colorings) $ \(y, guessResults) -> do
+              for_ (zip [0..] guessResults) $ \(x, guessResult) -> do
+                ix (V2 x y) . #blockStatus .= guessStatus guessResult
   boardB <- changingB Map.empty
     [ onEvent boardWithColoredBlocksE
     $ setValue id
     ]
+
+  let gameOverE
+        = givenEvent landingBlocksE
+        $ maybeKeepIt $ \landingBlocks -> do
+            guard (isGameOver landingBlocks)
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> boardB <*> currentPieceB
