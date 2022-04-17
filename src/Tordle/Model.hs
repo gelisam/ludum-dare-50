@@ -174,8 +174,16 @@ renderPiece (Piece {..})
       | (pos, label) <- Map.toList $ unFreeTetromino $ runOneSidedTetromino pieceBlocks
       ]
 
+data WorldStatus
+  = Playing
+  | GameOver
+  | Win
+  deriving (Eq, Generic, Ord, Show)
+
 data World = World
-  { worldBoard
+  { worldStatus
+      :: WorldStatus
+  , worldBoard
       :: Board
   , worldCurrentPiece
       :: Piece

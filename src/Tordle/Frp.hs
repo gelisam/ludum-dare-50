@@ -266,9 +266,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = givenEvent landingBlocksE
         $ maybeKeepIt $ \landingBlocks -> do
             guard (isGameOver landingBlocks)
+  worldStatusB <- changingB Playing
+    [ onEvent gameOverE $ setValue $ \() -> GameOver
+    ]
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
-  let worldB = World <$> boardB <*> currentPieceB
+  let worldB = World <$> worldStatusB <*> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
   lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)
                    <$ mconcat [tryMoveLeftE, tryMoveRightE, userTriesToMoveDownE]

@@ -150,6 +150,13 @@ presentWorld window renderer assets (World {..}) = do
   windowSize <- get $ Video.windowSize window
   Renderer.rendererDrawColor renderer $= V4 255 255 255 255
   Renderer.clear renderer
-  drawCenteredTexture renderer (assetsTitleTexture assets) (V2 (windowSize^._x `div` 2) 50)
+  let bigTextTexture = case worldStatus of
+        Playing
+          -> assetsTitleTexture assets
+        GameOver
+          -> assetsGameOverTexture assets
+        Win
+          -> assetsWinTexture assets
+  drawCenteredTexture renderer bigTextTexture (V2 (windowSize^._x `div` 2) 50)
   drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard) (half windowSize)
   Renderer.present renderer
