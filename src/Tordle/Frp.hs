@@ -273,7 +273,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
   let worldB = World <$> worldStatusB <*> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
+
   lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)
                    <$ mconcat [tryMoveLeftE, tryMoveRightE, userTriesToMoveDownE]
                     )
+  lift $ reactimate ( Mixer.play (assetsGameOverSoundEffect assets)
+                   <$ gameOverE
+                    )
+
   lift $ reactimate (quit <$ keyEscE)

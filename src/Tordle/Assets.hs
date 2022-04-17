@@ -26,6 +26,8 @@ data Assets = Assets
       :: Map Char Texture
   , assetsMoveSoundEffect
       :: SoundEffect
+  , assetsGameOverSoundEffect
+      :: SoundEffect
   , assetsCommonWords
       :: Set String
   , assetsAllWords
@@ -40,36 +42,39 @@ withAssets renderer body = do
   withFont "assets/clear-sans.regular.ttf" 50 $ \titleFont -> do
     withFont "assets/clear-sans.regular.ttf" 24 $ \letterFont -> do
       withSoundEffect "assets/move.wav" $ \moveSoundEffect -> do
-        withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle" $ \titleTexture -> do
-          withTextTexture renderer titleFont (V4 0 0 0 255) "Game Over" $ \gameOverTexture -> do
-            withTextTexture renderer titleFont (V4 0 0 0 255) "Congratulations!" $ \winTexture -> do
-              withMultiple
-                  [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
-                  | c <- allLetters
-                  ]
-                  $ \blackLetterTextures -> do
+        withSoundEffect "assets/lose.wav" $ \gameOverSoundEffect -> do
+          withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle" $ \titleTexture -> do
+            withTextTexture renderer titleFont (V4 0 0 0 255) "Game Over" $ \gameOverTexture -> do
+              withTextTexture renderer titleFont (V4 0 0 0 255) "Congratulations!" $ \winTexture -> do
                 withMultiple
-                    [ With $ withTextTexture renderer letterFont (V4 255 255 255 255) (Text.singleton c)
+                    [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
                     | c <- allLetters
                     ]
-                    $ \whiteLetterTextures -> do
-                  commonWords <- readFile "assets/common-words.txt"
-                  allWords <- readFile "assets/all-words.txt"
-                  body $ Assets
-                    { assetsTitleTexture
-                        = titleTexture
-                    , assetsGameOverTexture
-                        = gameOverTexture
-                    , assetsWinTexture
-                        = winTexture
-                    , assetsBlackLetterTextures
-                        = Map.fromList $ zip allLetters blackLetterTextures
-                    , assetsWhiteLetterTextures
-                        = Map.fromList $ zip allLetters whiteLetterTextures
-                    , assetsMoveSoundEffect
-                        = moveSoundEffect
-                    , assetsCommonWords
-                        = Set.fromList $ lines commonWords
-                    , assetsAllWords
-                        = Set.fromList $ lines allWords
-                    }
+                    $ \blackLetterTextures -> do
+                  withMultiple
+                      [ With $ withTextTexture renderer letterFont (V4 255 255 255 255) (Text.singleton c)
+                      | c <- allLetters
+                      ]
+                      $ \whiteLetterTextures -> do
+                    commonWords <- readFile "assets/common-words.txt"
+                    allWords <- readFile "assets/all-words.txt"
+                    body $ Assets
+                      { assetsTitleTexture
+                          = titleTexture
+                      , assetsGameOverTexture
+                          = gameOverTexture
+                      , assetsWinTexture
+                          = winTexture
+                      , assetsBlackLetterTextures
+                          = Map.fromList $ zip allLetters blackLetterTextures
+                      , assetsWhiteLetterTextures
+                          = Map.fromList $ zip allLetters whiteLetterTextures
+                      , assetsMoveSoundEffect
+                          = moveSoundEffect
+                      , assetsGameOverSoundEffect
+                          = gameOverSoundEffect
+                      , assetsCommonWords
+                          = Set.fromList $ lines commonWords
+                      , assetsAllWords
+                          = Set.fromList $ lines allWords
+                      }
