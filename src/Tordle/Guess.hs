@@ -12,10 +12,13 @@ data GuessResult
   | Grey
   deriving (Eq, Generic, Ord, Show)
 
+type Coloring
+  = [GuessResult]
+
 analyzeGuess
   :: [Char]  -- ^ correct word
   -> [Char]  -- ^ guess
-  -> [GuessResult]
+  -> Coloring
 analyzeGuess correct guess
   = go (zip guess isGreen) possiblyYellowLetters
   where

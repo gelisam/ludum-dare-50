@@ -62,6 +62,16 @@ changingB a0
   . unions
   . reverse  -- so that the last function is applied last
 
+changingE
+  :: MonadMoment m
+  => a
+  -> [Event (a -> a)]
+  -> m (Event a)
+changingE a0
+  = accumE a0
+  . unions
+  . reverse  -- so that the last function is applied last
+
 changingOfB
   :: MonadMoment m
   => Getting a aa a
@@ -71,6 +81,17 @@ changingOfB
 changingOfB aa2a aa0 events = do
   aaB <- changingB aa0 events
   pure $ fmap (view aa2a) aaB
+
+changingOfE
+  :: MonadMoment m
+  => Getting a aa a
+  -> aa
+  -> [Event (aa -> aa)]
+  -> m (Event a)
+changingOfE aa2a aa0 events = do
+  aaE <- changingE aa0 events
+  pure $ fmap (view aa2a) aaE
+
 
 onEvent
   :: Event a
@@ -144,6 +165,17 @@ changingRandomlyB
 changingRandomlyB a0 events = do
   rng0 <- splitGenM StateGenM
   changingOfB #theValue (ValueAndRng a0 rng0) events
+
+changingRandomlyE
+  :: ( MonadMoment m
+     , MonadState StdGen m
+     )
+  => a
+  -> [Event (ValueAndRng a -> ValueAndRng a)]
+  -> m (Event a)
+changingRandomlyE a0 events = do
+  rng0 <- splitGenM StateGenM
+  changingOfE #theValue (ValueAndRng a0 rng0) events
 
 setValueRandomly
   :: (a -> State StdGen b)
