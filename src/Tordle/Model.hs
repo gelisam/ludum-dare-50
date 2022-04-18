@@ -176,7 +176,7 @@ renderPiece
 renderPiece (Piece {..})
   = Map.fromList
       [ (piecePos + pos, Block label Falling)
-      | (pos, label) <- Map.toList $ unFreeTetromino $ runOneSidedTetromino pieceBlocks
+      | (pos, label) <- Map.toList $ unFixedTetromino $ runOneSidedTetromino pieceBlocks
       ]
 
 data WorldStatus

@@ -101,8 +101,8 @@ randomOneSidedTetromino
   => Char
   -> m (OneSidedTetromino Label)
 randomOneSidedTetromino letter = do
-  freeTetromino <- randomElement freeTetrominos
-  labelledTetromino <- for freeTetromino $ \case
+  fixedTetromino <- randomElement fixedTetrominos
+  labelledTetromino <- for fixedTetromino $ \case
     Unlabelled -> do
       pure Wild
     Labelled -> do

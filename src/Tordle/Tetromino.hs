@@ -14,16 +14,22 @@ import Linear.Extra
 import Linear.V2 (V2(..), _x, _y)
 
 
-freeTetrominoShapes
+fixedTetrominoShapes
   :: [[String]]
-freeTetrominoShapes
+fixedTetrominoShapes
   = [ [ "A##A"
       ]
     , [ "A#."
       , ".#A"
       ]
+    , [ ".#A"
+      , "A#."
+      ]
     , [ "A##"
       , "..A"
+      ]
+    , [ "..A"
+      , "A##"
       ]
     , [ "A#"
       , "#A"
@@ -39,17 +45,17 @@ data BlockType
   | Unlabelled
   deriving (Eq, Generic, Ord, Show)
 
-newtype FreeTetromino a = FreeTetromino
-  { unFreeTetromino
+newtype FixedTetromino a = FixedTetromino
+  { unFixedTetromino
       :: Map (V2 CInt) a
   }
   deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
 
-mkFreeTetromino
+mkFixedTetromino
   :: Map (V2 CInt) a
-  -> FreeTetromino a
-mkFreeTetromino positions
-  = FreeTetromino
+  -> FixedTetromino a
+mkFixedTetromino positions
+  = FixedTetromino
   $ Map.mapKeys (subtract center)
   $ positions
   where
@@ -57,10 +63,10 @@ mkFreeTetromino positions
     maxY = Unsafe.fromJust $ maximumOf (to Map.keys . folded . _y) positions
     center = half (V2 maxX maxY)
 
-printFreeTetromino
-  :: FreeTetromino BlockType
+printFixedTetromino
+  :: FixedTetromino BlockType
   -> IO ()
-printFreeTetromino (FreeTetromino positions) = do
+printFixedTetromino (FixedTetromino positions) = do
   for_ [minY-1..maxY+1] $ \y -> do
     for_ [minX-1..maxX+1] $ \x -> do
       case Map.lookup (V2 x y) positions of
@@ -83,10 +89,10 @@ printFreeTetromino (FreeTetromino positions) = do
     minY = Unsafe.fromJust $ minimumOf (to Map.keys . folded . _y) positions
     maxY = Unsafe.fromJust $ maximumOf (to Map.keys . folded . _y) positions
 
-parseFreeTetromino
+parseFixedTetromino
   :: [String]
-  -> Maybe (FreeTetromino BlockType)
-parseFreeTetromino rows = do
+  -> Maybe (FixedTetromino BlockType)
+parseFixedTetromino rows = do
   mapping <- execWriterT $ do
     for_ (zip [0..] rows) $ \(y,row) -> do
       for_ (zip [0..] row) $ \(x,c) -> do
@@ -99,36 +105,36 @@ parseFreeTetromino rows = do
             tell $ Map.singleton (V2 x y) Unlabelled
           _ -> do
             lift Nothing
-  pure $ mkFreeTetromino mapping
+  pure $ mkFixedTetromino mapping
 
-freeTetrominos
-  :: [FreeTetromino BlockType]
-freeTetrominos
+fixedTetrominos
+  :: [FixedTetromino BlockType]
+fixedTetrominos
   = [ tetromino
-    | tetrominoShape <- freeTetrominoShapes
-    , Just tetromino <- [parseFreeTetromino tetrominoShape]
+    | tetrominoShape <- fixedTetrominoShapes
+    , Just tetromino <- [parseFixedTetromino tetrominoShape]
     ]
 
 
 newtype OneSidedTetromino a = OneSidedTetromino
   { unOneSidedTetromino
-      :: [FreeTetromino a]  -- infinite rotations
+      :: [FixedTetromino a]  -- infinite rotations
   }
   deriving (Eq, Foldable, Functor, Ord, Show, Traversable)
 
 mkOneSidedTetromino
   :: Ord a
-  => FreeTetromino a
+  => FixedTetromino a
   -> OneSidedTetromino a
 mkOneSidedTetromino
   = OneSidedTetromino
-  . fmap mkFreeTetromino
+  . fmap mkFixedTetromino
   . iterate (Map.mapKeys (\(V2 x y) -> V2 y (-x)))
-  . unFreeTetromino
+  . unFixedTetromino
 
 runOneSidedTetromino
   :: OneSidedTetromino a
-  -> FreeTetromino a
+  -> FixedTetromino a
 runOneSidedTetromino
   = head
   . unOneSidedTetromino
@@ -145,14 +151,14 @@ printOneSidedTetromino
   :: OneSidedTetromino BlockType
   -> IO ()
 printOneSidedTetromino (OneSidedTetromino rotations) = do
-  for_ rotations $ \tetromino -> do
-    printFreeTetromino tetromino
+  for_ (take 4 rotations) $ \tetromino -> do
+    printFixedTetromino tetromino
     putStrLn ""
 
 oneSidedTetrominos
   :: [OneSidedTetromino BlockType]
 oneSidedTetrominos
-  = fmap mkOneSidedTetromino freeTetrominos
+  = fmap mkOneSidedTetromino fixedTetrominos
 
 
 test
