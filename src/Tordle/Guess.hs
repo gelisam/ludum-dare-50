@@ -1,18 +1,11 @@
-{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, NamedFieldPuns #-}
+{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns #-}
 module Tordle.Guess where
 
 import Data.List (delete)
 import Data.Set qualified as Set
-import GHC.Generics (Generic)
 import Tordle.Assets
 import Tordle.Model
 
-
-data GuessResult
-  = Green
-  | Yellow
-  | Grey
-  deriving (Eq, Generic, Ord, Show)
 
 type Coloring
   = [GuessResult]
@@ -69,3 +62,11 @@ guessStatus Yellow
   = WrongSpot
 guessStatus Grey
   = NotInWord
+
+maybeGuessStatus
+  :: Maybe GuessResult
+  -> BlockStatus
+maybeGuessStatus Nothing
+  = InIncompleteWord
+maybeGuessStatus (Just guessResult)
+  = guessStatus guessResult

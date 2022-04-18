@@ -21,6 +21,7 @@ import SDL.Video.Renderer qualified as Renderer
 import SDL.Extra
 import Tordle.Assets
 import Tordle.Colors
+import Tordle.Guess
 import Tordle.Model
 
 
@@ -140,6 +141,32 @@ drawBoard renderer assets board center = do
       when (inMainBoard ij || isJust maybeBlock) $ do
         drawBlock renderer assets maybeBlock (topLeft + ij * bLOCK_STRIDE)
 
+drawAlphabetColoring
+  :: Renderer
+  -> Assets
+  -> AlphabetColoring
+  -> Pos
+  -> IO ()
+drawAlphabetColoring renderer assets alphabedColoring center = do
+  let rows
+        :: [String]
+      rows
+        = [ "ABCDEFGHI"
+          , "JKLMNOPQR"
+          , "STUVWXYZ"
+          ]
+  for_ (zip [0..] rows) $ \(j, row) -> do
+    let w :: CInt
+        w = fromIntegral $ length row
+        topLeft
+          :: Pos
+        topLeft
+          = center - half ((V2 w 3 - 1) * bLOCK_STRIDE)
+    for_ (zip [0..] row) $ \(i, letter) -> do
+      let maybeGuessResult = Map.lookup letter alphabedColoring
+      let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult)
+      drawBlock renderer assets (Just block) (topLeft + V2 i j * bLOCK_STRIDE)
+
 presentWorld
   :: Window
   -> Renderer
@@ -158,7 +185,9 @@ presentWorld window renderer assets (World {..}) = do
         Win
           -> assetsWinTexture assets
   drawCenteredTexture renderer bigTextTexture
-    (V2 (1 * windowSize^._x `div` 4) (1 * windowSize^._y `div` 3))
+    (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 3))
+  drawAlphabetColoring renderer assets worldAlphabetColoring
+    (V2 (1 * windowSize^._x `div` 3 - 10) (2 * windowSize^._y `div` 3))
   drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard)
-    (V2 (2 * windowSize^._x `div` 3) (windowSize^._y `div` 2))
+    (V2 (3 * windowSize^._x `div` 4 + 10) (windowSize^._y `div` 2))
   Renderer.present renderer

@@ -218,6 +218,15 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
        -> if isRealWord_
           then Just <$> analyzeGuess correctWord guess
           else replicate 5 Nothing
+  alphabetColoringB <- changingB Map.empty
+    [ onEvent guessesE
+    $ withSimultaneousEvent coloringsE
+    $ changeState $ \(guesses, colorings) -> do
+        for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
+          for_ (zip guess maybeGuessResults) $ \(letter, maybeGuessResult) -> do
+            for_ maybeGuessResult $ \guessResult -> do
+              modify $ Map.insertWith max letter guessResult
+    ]
 
   correctWord <- randomWord assets
 
@@ -333,7 +342,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     ]
 
   let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
-  let worldB = World <$> worldStatusB <*> boardB <*> currentPieceB
+  let worldB = World <$> worldStatusB <*> alphabetColoringB <*> boardB <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
 
   lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)

@@ -185,9 +185,20 @@ data WorldStatus
   | Win
   deriving (Eq, Generic, Ord, Show)
 
+data GuessResult
+  = Grey
+  | Yellow
+  | Green
+  deriving (Eq, Generic, Ord, Show)
+
+type AlphabetColoring
+  = Map Char GuessResult
+
 data World = World
   { worldStatus
       :: WorldStatus
+  , worldAlphabetColoring
+      :: AlphabetColoring
   , worldBoard
       :: Board
   , worldCurrentPiece
