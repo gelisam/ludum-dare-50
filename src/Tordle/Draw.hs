@@ -188,6 +188,11 @@ presentWorld window renderer assets (World {..}) = do
     (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 3))
   drawAlphabetColoring renderer assets worldAlphabetColoring
     (V2 (1 * windowSize^._x `div` 3 - 10) (2 * windowSize^._y `div` 3))
-  drawBoard renderer assets (renderPiece worldCurrentPiece <> worldBoard)
+  let board'
+        = case worldStatus of
+            Playing
+              -> renderPiece worldCurrentPiece <> worldBoard
+            _ -> worldBoard
+  drawBoard renderer assets board'
     (V2 (3 * windowSize^._x `div` 4 + 10) (windowSize^._y `div` 2))
   Renderer.present renderer
