@@ -10,15 +10,21 @@ import Data.Traversable
 import System.Random.Stateful (StateGenM(..), StdGen, uniformRM)
 import Tordle.Assets
 import Tordle.Model
-import Tordle.Tetromino
 
+
+randomIndex
+  :: MonadState StdGen m
+  => [a]
+  -> m Int
+randomIndex xs = do
+  uniformRM (0, length xs - 1) StateGenM
 
 randomElement
   :: MonadState StdGen m
   => [a]
   -> m a
 randomElement xs = do
-  i <- uniformRM (0, length xs - 1) StateGenM
+  i <- randomIndex xs
   pure (xs !! i)
 
 randomMember
@@ -95,16 +101,3 @@ randomLetter
 randomLetter
   = randomElement
   . Set.toList
-
-randomOneSidedTetromino
-  :: MonadState StdGen m
-  => Char
-  -> m (OneSidedTetromino Label)
-randomOneSidedTetromino letter = do
-  fixedTetromino <- randomElement fixedTetrominos
-  labelledTetromino <- for fixedTetromino $ \case
-    Unlabelled -> do
-      pure Wild
-    Labelled -> do
-      pure $ Letter letter
-  pure $ mkOneSidedTetromino labelledTetromino

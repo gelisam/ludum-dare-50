@@ -28,6 +28,7 @@ import Tordle.Draw
 import Tordle.Guess
 import Tordle.Model
 import Tordle.Rng
+import Tordle.Tetromino
 
 
 frpNetwork
@@ -53,6 +54,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let keyLeftE  = () <$ filterE (hasKeycode SDL.KeycodeLeft) keyPressE
   let keyDownE  = () <$ filterE (hasKeycode SDL.KeycodeDown) keyPressE
   let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
+  let keyTabE   = () <$ filterE (hasKeycode SDL.KeycodeTab) keyPressE
   let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
   let keyLetterE
@@ -62,25 +64,27 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             guard (keycode >= Char.ord 'a' && keycode <= Char.ord 'z')
             pure $ Char.toUpper $ Char.chr keycode
 
-  let switchToGuessE
+  let switchToChooseE
         = landE
       switchToPlaceE
         = () <$ pickLetterE
       switchToEndScreenE
         = gameOverE
        <> winE
-  canGuessB <- changingB True
-    [ onEvent switchToGuessE     $ setValue $ \() -> True
+  canChooseB <- changingB True
+    [ onEvent switchToChooseE    $ setValue $ \() -> True
     , onEvent switchToPlaceE     $ setValue $ \() -> False
     , onEvent switchToEndScreenE $ setValue $ \() -> False
     ]
   canPlaceB <- changingB False
-    [ onEvent switchToGuessE     $ setValue $ \() -> False
+    [ onEvent switchToChooseE    $ setValue $ \() -> False
     , onEvent switchToPlaceE     $ setValue $ \() -> True
     , onEvent switchToEndScreenE $ setValue $ \() -> False
     ]
   let pickLetterE
-        = whenE canGuessB keyLetterE
+        = whenE canChooseB keyLetterE
+      changeShapeE
+        = whenE canChooseB keyTabE
       tryRotateClockwiseE
         = whenE canPlaceB keyUpE
       tryRotateCounterclockwiseE
@@ -141,6 +145,21 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = any (not . inMainBoard)
         . Map.keys
 
+      mkQuestionMarkTetromino
+        :: FixedTetromino BlockType
+        -> OneSidedTetromino Label
+      mkQuestionMarkTetromino
+        = fmap addQuestionMark
+        . mkOneSidedTetromino
+        where
+          addQuestionMark
+            :: BlockType
+            -> Label
+          addQuestionMark Unlabelled
+            = Wild
+          addQuestionMark Labelled
+            = Letter '?'
+
   let landE
         = givenEvent tryMoveDownE
         $ withBehaviour boardB
@@ -185,20 +204,36 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
   correctWord <- randomWord assets
 
-  firstOneSidedTetromino <- randomOneSidedTetromino '?'
-  oneSidedTetrominoB <- changingRandomlyB firstOneSidedTetromino
-    ( [ onEvent landE
-      $ setValueRandomly $ \() -> do
-          oneSidedTetromino <- randomOneSidedTetromino '?'
-          pure oneSidedTetromino
+  firstFixedTetrominoIndex <- randomIndex fixedTetrominos
+  fixedTetrominoIndexE <- changingRandomlyE firstFixedTetrominoIndex
+    [ onEvent landE
+    $ setValueRandomly $ \() -> do
+        randomIndex fixedTetrominos
+    , onEvent changeShapeE
+    $ changeValueOf #theValue $ \((), i)
+   -> (i + 1) `mod` length fixedTetrominos
+    ]
+
+  let firstFixedTetromino
+        = fixedTetrominos !! firstFixedTetrominoIndex
+  let fixedTetrominoE
+        = givenEvent fixedTetrominoIndexE
+        $ transformIt $ \i
+       -> fixedTetrominos !! i
+
+  let firstOneSidedTetromino = mkQuestionMarkTetromino firstFixedTetromino
+  oneSidedTetrominoB <- changingB firstOneSidedTetromino
+    ( [ onEvent fixedTetrominoE
+      $ setValue $ \fixedTetromino -> do
+          mkQuestionMarkTetromino fixedTetromino
       , onEvent pickLetterE
-      $ changeStateOf #theValue $ \letter -> do
+      $ changeState $ \letter -> do
           mapped . #_Letter .= letter
       ]
    ++ [ onEvent rotateE
       $ withBehaviour boardB
       $ withBehaviour piecePosB
-      $ changeStateOf #theValue $ \(((), board),piecePos) -> do
+      $ changeState $ \(((), board),piecePos) -> do
           oneSidedTetromino <- get
           let oneSidedTetromino' = rotate oneSidedTetromino
           when (isMoveLegal board $ Piece oneSidedTetromino' piecePos) $ do
