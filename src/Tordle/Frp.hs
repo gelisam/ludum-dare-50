@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost, RecursiveDo #-}
+{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost, LambdaCase, RecursiveDo #-}
 {-# OPTIONS -Wno-name-shadowing #-}
 module Tordle.Frp where
 
@@ -218,7 +218,16 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         for completedRows $ \y -> do
           let getLabel x y = board ^?! ix (V2 x y) . #blockLabel
           let labels = map (flip getLabel y) xCoordinates
-          randomCompletion assets (improveLabels knownLetters labels)
+          let improvedLabels = improveLabels knownLetters labels
+          randomCompatibleWord assets improvedLabels >>= \case
+            Just completion -> do
+              pure completion
+            Nothing -> do
+              randomCompatibleWord assets labels >>= \case
+                Just completion -> do
+                  pure completion
+                Nothing -> do
+                  randomCompatibleGibberish labels
     ]
   let areRealWordsE
         = givenEvent guessesE
