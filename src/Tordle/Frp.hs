@@ -271,7 +271,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = givenEvent coloringsE
         $ maybeKeepIt $ \colorings -> do
             guard $ any (all (== Green)) colorings
-  worldStatusB <- changingB Guessing
+  worldStatusB <- changingB Playing
     [ onEvent gameOverE $ setValue $ \() -> GameOver
     , onEvent winE      $ setValue $ \() -> Win
     ]
