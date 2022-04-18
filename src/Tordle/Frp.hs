@@ -206,10 +206,18 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           let labels = map (flip getLabel y) xCoordinates
           randomCompletion assets labels
     ]
-  let coloringsE
+  let areRealWordsE
         = givenEvent guessesE
         $ transformIt
-        $ fmap (analyzeGuess correctWord)
+        $ fmap (isRealWord assets)
+  let coloringsE
+        = givenEvent guessesE
+        $ withSimultaneousEvent areRealWordsE
+        $ transformIt $ \(guesses, areRealWords)
+       -> flip fmap (zip guesses areRealWords) $ \(guess, isRealWord_)
+       -> if isRealWord_
+          then Just <$> analyzeGuess correctWord guess
+          else replicate 5 Nothing
 
   correctWord <- randomWord assets
 
@@ -293,18 +301,19 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ withSimultaneousEvent boardWithLetterBlocksE
         $ transformIt $ \((completedRows, colorings), board)
        -> flip execState board $ do
-            for_ (zip completedRows colorings) $ \(y, guessResults) -> do
-              for_ (zip [0..] guessResults) $ \(x, guessResult) -> do
-                ix (V2 x y) . #blockStatus .= guessStatus guessResult
+            for_ (zip completedRows colorings) $ \(y, maybeGuessResults) -> do
+              for_ (zip [0..] maybeGuessResults) $ \(x, maybeGuessResult) -> do
+                for_ maybeGuessResult $ \guessResult -> do
+                  ix (V2 x y) . #blockStatus .= guessStatus guessResult
   let boardWithReorderedRowsE
         = givenEvent completedRowsE
-        $ withSimultaneousEvent guessesE
+        $ withSimultaneousEvent areRealWordsE
         $ withSimultaneousEvent boardWithColoredBlocksE
-        $ transformIt $ \((completedRows, guesses), board)
+        $ transformIt $ \((completedRows, areRealWords), board)
        -> flip performRowActions board
         $ Map.fromList
-        $ flip fmap (zip completedRows guesses) $ \(y, guess)
-       -> (y, if isRealWord assets guess then MoveRowToBottom else DeleteRow)
+        $ flip fmap (zip completedRows areRealWords) $ \(y, isRealWord_)
+       -> (y, if isRealWord_ then MoveRowToBottom else DeleteRow)
   boardB <- changingB Map.empty
     [ onEvent boardWithReorderedRowsE
     $ setValue id
@@ -317,7 +326,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let winE
         = givenEvent coloringsE
         $ maybeKeepIt $ \colorings -> do
-            guard $ any (all (== Green)) colorings
+            guard $ any (all (== Just Green)) colorings
   worldStatusB <- changingB Playing
     [ onEvent gameOverE $ setValue $ \() -> GameOver
     , onEvent winE      $ setValue $ \() -> Win
