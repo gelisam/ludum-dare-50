@@ -10,6 +10,7 @@ import Data.Char qualified as Char
 import Data.Foldable
 import Data.Function.Extra
 import Data.Generics.Labels ()
+import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Traversable
@@ -169,6 +170,18 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           addQuestionMark Labelled
             = Letter '?'
 
+      improveLabels
+        :: Map CInt Char
+        -> [Label]
+        -> [Label]
+      improveLabels knownLetters
+        = iover itraversed $ \i label
+       -> case (label, Map.lookup (fromIntegral i) knownLetters) of
+            (Wild, Just knownLetter)
+              -> Letter knownLetter
+            _
+              -> label
+
   let landE
         = givenEvent tryMoveDownE
         $ withBehaviour boardB
@@ -200,11 +213,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   guessesE <- changingRandomlyE undefined
     [ onEvent completedRowsE
     $ withSimultaneousEvent boardWithWildBlocksE
-    $ setValueRandomly $ \(completedRows, board) -> do
+    $ withBehaviour knownLettersB
+    $ setValueRandomly $ \((completedRows, board), knownLetters) -> do
         for completedRows $ \y -> do
           let getLabel x y = board ^?! ix (V2 x y) . #blockLabel
           let labels = map (flip getLabel y) xCoordinates
-          randomCompletion assets labels
+          randomCompletion assets (improveLabels knownLetters labels)
     ]
   let areRealWordsE
         = givenEvent guessesE
@@ -226,6 +240,15 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           for_ (zip guess maybeGuessResults) $ \(letter, maybeGuessResult) -> do
             for_ maybeGuessResult $ \guessResult -> do
               modify $ Map.insertWith max letter guessResult
+    ]
+  knownLettersB <- changingB Map.empty
+    [ onEvent guessesE
+    $ withSimultaneousEvent coloringsE
+    $ changeState $ \(guesses, colorings) -> do
+        for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
+          for_ (zip3 xCoordinates guess maybeGuessResults) $ \(x, letter, maybeGuessResult) -> do
+            when (maybeGuessResult == Just Green) $ do
+              modify $ Map.insert x letter
     ]
 
   correctWord <- randomWord assets
