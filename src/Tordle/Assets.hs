@@ -62,9 +62,10 @@ withAssets renderer body = do
         withMultiple
             [ With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Type a letter"
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Place the block using the arrow keys"
+            , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Press R to play again"
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Tip: try Tab / Shift+Tab before choosing a letter"
             ]
-            $ \[helpGuessLetter, helpPlaceBlock, helpChangeShape] -> do
+            $ \[helpGuessLetter, helpPlaceBlock, helpPlayAgain, helpChangeShape] -> do
           let allChars = '?' : allLetters
           withMultiple
               [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
@@ -89,6 +90,7 @@ withAssets renderer body = do
                     = Map.fromList
                         [ (HelpGuessLetter, helpGuessLetter)
                         , (HelpPlaceBlock, helpPlaceBlock)
+                        , (HelpPlayAgain, helpPlayAgain)
                         , (HelpChangeShape, helpChangeShape)
                         ]
                 , assetsBlackLetterTextures

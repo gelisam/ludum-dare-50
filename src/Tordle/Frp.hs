@@ -63,6 +63,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
   let keyTabE   = () <$ filterE (allP [hasKeycode SDL.KeycodeTab, not . hasShift]) keyPressE
   let keyUntabE = () <$ filterE (allP [hasKeycode SDL.KeycodeTab, hasShift]) keyPressE
+  let keyRE     = () <$ filterE (hasKeycode SDL.KeycodeR) keyPressE
   let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
   let keyLetterE
@@ -80,14 +81,22 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = gameOverE
        <> winE
   canChooseB <- changingB True
-    [ onEvent switchToChooseE    $ setValue $ \() -> True
+    [ onEvent resetE             $ setValue $ \() -> True
+    , onEvent switchToChooseE    $ setValue $ \() -> True
     , onEvent switchToPlaceE     $ setValue $ \() -> False
     , onEvent switchToEndScreenE $ setValue $ \() -> False
     ]
   canPlaceB <- changingB False
-    [ onEvent switchToChooseE    $ setValue $ \() -> False
+    [ onEvent resetE             $ setValue $ \() -> False
+    , onEvent switchToChooseE    $ setValue $ \() -> False
     , onEvent switchToPlaceE     $ setValue $ \() -> True
     , onEvent switchToEndScreenE $ setValue $ \() -> False
+    ]
+  canResetB <- changingB False
+    [ onEvent resetE             $ setValue $ \() -> False
+    , onEvent switchToChooseE    $ setValue $ \() -> False
+    , onEvent switchToPlaceE     $ setValue $ \() -> False
+    , onEvent switchToEndScreenE $ setValue $ \() -> True
     ]
   let pickLetterE
         = whenE canChooseB keyLetterE
@@ -109,6 +118,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = whenE canPlaceB gravityTickE
       tryMoveDownE
         = userTriesToMoveDownE <> gravityE
+      resetE
+        = whenE canResetB keyRE
 
   timeB <- stepper 0 timeE
   let gravityTickE
@@ -242,7 +253,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           then Just <$> analyzeGuess correctWord guess
           else replicate 5 Nothing
   alphabetColoringB <- changingB Map.empty
-    [ onEvent guessesE
+    [ onEvent resetE $ setValue $ \() -> Map.empty
+    , onEvent guessesE
     $ withSimultaneousEvent coloringsE
     $ changeState $ \(guesses, colorings) -> do
         for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
@@ -251,7 +263,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
               modify $ Map.insertWith max letter guessResult
     ]
   knownLettersB <- changingB Map.empty
-    [ onEvent guessesE
+    [ onEvent resetE $ setValue $ \() -> Map.empty
+    , onEvent guessesE
     $ withSimultaneousEvent coloringsE
     $ changeState $ \(guesses, colorings) -> do
         for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
@@ -264,7 +277,10 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
   firstFixedTetrominoIndex <- randomIndex fixedTetrominos
   fixedTetrominoIndexE <- changingRandomlyE firstFixedTetrominoIndex
-    [ onEvent landE
+    [ onEvent resetE
+    $ setValueRandomly $ \() -> do
+        randomIndex fixedTetrominos
+    , onEvent landE
     $ setValueRandomly $ \() -> do
         randomIndex fixedTetrominos
     , onEvent nextShapeE
@@ -308,7 +324,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
   let firstPos = V2 2 1
   piecePosB <- changingB firstPos
-    ( [ onEvent landE $ setValue $ \() -> firstPos
+    ( [ onEvent resetE $ setValue $ \() -> firstPos
+      , onEvent landE  $ setValue $ \() -> firstPos
       ]
    ++ [ onEvent dirE
       $ withBehaviour boardB
@@ -356,7 +373,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ flip fmap (zip completedRows areRealWords) $ \(y, isRealWord_)
        -> (y, if isRealWord_ then MoveRowToBottom else DeleteRow)
   boardB <- changingB Map.empty
-    [ onEvent boardWithReorderedRowsE
+    [ onEvent resetE $ setValue $ \() -> Map.empty
+    , onEvent boardWithReorderedRowsE
     $ setValue id
     ]
 
@@ -369,12 +387,16 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ maybeKeepIt $ \colorings -> do
             guard $ any (all (== Just Green)) colorings
   worldStatusB <- changingB Playing
-    [ onEvent gameOverE $ setValue $ \() -> GameOver
+    [ onEvent resetE    $ setValue $ \() -> Playing
+    , onEvent gameOverE $ setValue $ \() -> GameOver
     , onEvent winE      $ setValue $ \() -> Win
     ]
 
   playerKnowsHowToPlaceBlocksB <- changingB False
     [ onEvent landE $ setValue $ \() -> True
+    ]
+  playerKnowsHowToPlayAgainB <- changingB False
+    [ onEvent resetE $ setValue $ \() -> True
     ]
   playerKnowsHowToChangeShapeB <- changingB False
     [ onEvent (nextShapeE <> prevShapeE) $ setValue $ \() -> True
@@ -386,6 +408,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     $ setValue $ \_ -> Nothing
     , onEvent (whenE (not <$> playerKnowsHowToChangeShapeB) gameOverE)
     $ setValue $ \_ -> Just HelpChangeShape
+    , onEvent (whenE (not <$> playerKnowsHowToPlayAgainB) switchToEndScreenE)
+    $ setValue $ \_ -> Just HelpPlayAgain
     ]
 
   let currentPieceB

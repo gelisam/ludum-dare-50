@@ -197,6 +197,7 @@ type AlphabetColoring
 data HelpText
   = HelpGuessLetter
   | HelpPlaceBlock
+  | HelpPlayAgain
   | HelpChangeShape
   deriving (Eq, Generic, Ord, Show)
 
