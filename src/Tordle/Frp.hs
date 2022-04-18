@@ -8,6 +8,7 @@ import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import Data.Char qualified as Char
 import Data.Foldable
+import Data.Function.Extra
 import Data.Generics.Labels ()
 import Data.Map qualified as Map
 import Data.Set qualified as Set
@@ -49,12 +50,18 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                                  . #keyboardEventKeysym
                                  )
                                  keyboardE
-  let hasKeycode  keycode  keysym = SDL.keysymKeycode keysym == keycode
+
+  let hasKeycode keycode keysym
+        = SDL.keysymKeycode keysym == keycode
+  let hasShift
+        = anyP [SDL.keyModifierLeftShift, SDL.keyModifierRightShift]
+        . SDL.keysymModifier
   let keyUpE    = () <$ filterE (hasKeycode SDL.KeycodeUp) keyPressE
   let keyLeftE  = () <$ filterE (hasKeycode SDL.KeycodeLeft) keyPressE
   let keyDownE  = () <$ filterE (hasKeycode SDL.KeycodeDown) keyPressE
   let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
-  let keyTabE   = () <$ filterE (hasKeycode SDL.KeycodeTab) keyPressE
+  let keyTabE   = () <$ filterE (allP [hasKeycode SDL.KeycodeTab, not . hasShift]) keyPressE
+  let keyUntabE = () <$ filterE (allP [hasKeycode SDL.KeycodeTab, hasShift]) keyPressE
   let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyReleaseE
 
   let keyLetterE
@@ -83,8 +90,10 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     ]
   let pickLetterE
         = whenE canChooseB keyLetterE
-      changeShapeE
+      nextShapeE
         = whenE canChooseB keyTabE
+      prevShapeE
+        = whenE canChooseB keyUntabE
       tryRotateClockwiseE
         = whenE canPlaceB keyUpE
       tryRotateCounterclockwiseE
@@ -209,9 +218,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     [ onEvent landE
     $ setValueRandomly $ \() -> do
         randomIndex fixedTetrominos
-    , onEvent changeShapeE
+    , onEvent nextShapeE
     $ changeValueOf #theValue $ \((), i)
    -> (i + 1) `mod` length fixedTetrominos
+    , onEvent prevShapeE
+    $ changeValueOf #theValue $ \((), i)
+   -> (i + length fixedTetrominos - 1) `mod` length fixedTetrominos
     ]
 
   let firstFixedTetromino
