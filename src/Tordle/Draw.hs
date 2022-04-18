@@ -1,7 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, RecordWildCards, ScopedTypeVariables #-}
 module Tordle.Draw where
 
-import Control.Lens ((^.))
+import Control.Lens
 import Control.Monad (when)
 import Data.Foldable (for_)
 import Data.Map ((!), Map)
@@ -45,6 +45,20 @@ oUTLINE_SIZE
 oUTLINE_SIZE
   = 2
 
+
+drawMaybeHelpText
+  :: Renderer
+  -> Assets
+  -> Maybe HelpText
+  -> Pos
+  -> IO ()
+drawMaybeHelpText renderer (Assets {assetsHelpTextTextures}) maybeHelpText pos = do
+  for_ maybeHelpText $ \helpText -> do
+    let texture
+          :: Texture
+        texture
+          = assetsHelpTextTextures ^?! ix helpText
+    drawCenteredTexture renderer texture pos
 
 drawSolidBlock
   :: Renderer
@@ -186,6 +200,8 @@ presentWorld window renderer assets (World {..}) = do
           -> assetsWinTexture assets
   drawCenteredTexture renderer bigTextTexture
     (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 3))
+  drawMaybeHelpText renderer assets worldMaybeHelpText
+    (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 2))
   drawAlphabetColoring renderer assets worldAlphabetColoring
     (V2 (1 * windowSize^._x `div` 3 - 10) (2 * windowSize^._y `div` 3))
   let board'

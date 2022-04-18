@@ -373,8 +373,32 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     , onEvent winE      $ setValue $ \() -> Win
     ]
 
-  let currentPieceB = Piece <$> oneSidedTetrominoB <*> piecePosB
-  let worldB = World <$> worldStatusB <*> alphabetColoringB <*> boardB <*> currentPieceB
+  playerKnowsHowToPlaceBlocksB <- changingB False
+    [ onEvent landE $ setValue $ \() -> True
+    ]
+  playerKnowsHowToChangeShapeB <- changingB False
+    [ onEvent (nextShapeE <> prevShapeE) $ setValue $ \() -> True
+    ]
+  maybeHelpTextB <- changingB (Just HelpGuessLetter)
+    [ onEvent (whenE (not <$> playerKnowsHowToPlaceBlocksB) pickLetterE)
+    $ setValue $ \_ -> Just HelpPlaceBlock
+    , onEvent landE
+    $ setValue $ \_ -> Nothing
+    , onEvent (whenE (not <$> playerKnowsHowToChangeShapeB) gameOverE)
+    $ setValue $ \_ -> Just HelpChangeShape
+    ]
+
+  let currentPieceB
+          = Piece
+        <$> oneSidedTetrominoB
+        <*> piecePosB
+  let worldB
+          = World
+        <$> worldStatusB
+        <*> maybeHelpTextB
+        <*> alphabetColoringB
+        <*> boardB
+        <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
 
   lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)

@@ -194,9 +194,17 @@ data GuessResult
 type AlphabetColoring
   = Map Char GuessResult
 
+data HelpText
+  = HelpGuessLetter
+  | HelpPlaceBlock
+  | HelpChangeShape
+  deriving (Eq, Generic, Ord, Show)
+
 data World = World
   { worldStatus
       :: WorldStatus
+  , worldMaybeHelpText
+      :: Maybe HelpText
   , worldAlphabetColoring
       :: AlphabetColoring
   , worldBoard
