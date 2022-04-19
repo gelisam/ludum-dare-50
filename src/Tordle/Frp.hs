@@ -247,7 +247,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let coloringsE
         = givenEvent guessesE
         $ withSimultaneousEvent areRealWordsE
-        $ transformIt $ \(guesses, areRealWords)
+        $ withBehaviour correctWordB
+        $ transformIt $ \((guesses, areRealWords), correctWord)
        -> flip fmap (zip guesses areRealWords) $ \(guess, isRealWord_)
        -> if isRealWord_
           then Just <$> analyzeGuess correctWord guess
@@ -273,7 +274,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
               modify $ Map.insert x letter
     ]
 
-  correctWord <- randomWord assets
+  firstCorrectWord <- randomWord assets
+  correctWordB <- changingRandomlyB firstCorrectWord
+    [ onEvent resetE
+    $ setValueRandomly $ \() -> do
+        randomWord assets
+    ]
 
   firstFixedTetrominoIndex <- randomIndex fixedTetrominos
   fixedTetrominoIndexE <- changingRandomlyE firstFixedTetrominoIndex
