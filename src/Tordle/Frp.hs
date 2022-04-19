@@ -122,15 +122,30 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = whenE canResetB keyRE
 
   timeB <- stepper 0 timeE
-  let gravityTickE
-        = fmap (const ())
-        $ filterE id
-        $ (<=) <$> nextGravityTickB <@> timeE
-  nextGravityTickB <- changingB 1
-    [ onEvent userTriesToMoveDownE $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    , onEvent gravityTickE         $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    , onEvent switchToPlaceE       $ withBehaviour timeB $ setValue $ \((),t) -> t + 1
-    ]
+  let delayE
+        :: MonadMoment m
+        => Double
+        -> Event a
+        -> m (Event a)
+      delayE delay startE = mdo
+        nextTickB <- changingB Nothing
+          [ onEvent delayedE
+          $ setValue $ \_
+         -> Nothing
+          , onEvent startE
+          $ withBehaviour timeB
+          $ setValue $ \(a, t)
+         -> Just (a, t + delay)
+          ]
+        let delayedE
+              = givenEvent timeE
+              $ withBehaviour nextTickB
+              $ maybeKeepIt $ \(t, maybeNextTick) -> do
+                  (a, nextTick) <- maybeNextTick
+                  guard (t >= nextTick)
+                  pure a
+        pure delayedE
+  gravityTickE <- delayE 1 (userTriesToMoveDownE <> gravityTickE <> switchToPlaceE)
 
   let onBlankSpace
         :: Board
