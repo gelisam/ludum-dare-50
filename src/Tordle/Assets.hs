@@ -1,4 +1,4 @@
-{-# LANGUAGE ImportQualifiedPost, OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedStrings #-}
 {-# OPTIONS -Wno-incomplete-uni-patterns #-}
 module Tordle.Assets where
 
@@ -8,6 +8,7 @@ import Data.Map qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text qualified as Text
+import GHC.Generics (Generic)
 import SDL (V4(..))
 import SDL.Video.Renderer (Renderer, Texture)
 import SDL.Extra
@@ -27,15 +28,14 @@ data Assets = Assets
       :: Map Char Texture
   , assetsWhiteLetterTextures
       :: Map Char Texture
-  , assetsMoveSoundEffect
-      :: SoundEffect
-  , assetsGameOverSoundEffect
-      :: SoundEffect
+  , assetsSoundEffects
+      :: Map Sound SoundEffect
   , assetsCommonWords
       :: Set String
   , assetsAllWords
       :: Set String
   }
+  deriving (Generic)
 
 withAssets
   :: Renderer
@@ -50,9 +50,10 @@ withAssets renderer body = do
       $ \[titleFont, letterFont, helpTextFont] -> do
     withMultiple
         [ With $ withSoundEffect "assets/move.wav"
+        , With $ withSoundEffect "assets/attach.wav"
         , With $ withSoundEffect "assets/lose.wav"
         ]
-        $ \[moveSoundEffect, gameOverSoundEffect] -> do
+        $ \[soundMove, soundLand, soundGameOver] -> do
       withMultiple
           [ With $ withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle"
           , With $ withTextTexture renderer titleFont (V4 0 0 0 255) "Game Over"
@@ -99,10 +100,12 @@ withAssets renderer body = do
                     = Map.fromList $ zip allChars blackLetterTextures
                 , assetsWhiteLetterTextures
                     = Map.fromList $ zip allChars whiteLetterTextures
-                , assetsMoveSoundEffect
-                    = moveSoundEffect
-                , assetsGameOverSoundEffect
-                    = gameOverSoundEffect
+                , assetsSoundEffects
+                    = Map.fromList
+                        [ (SoundMove, soundMove)
+                        , (SoundLand, soundLand)
+                        , (SoundGameOver, soundGameOver)
+                        ]
                 , assetsCommonWords
                     = Set.fromList $ lines commonWords
                 , assetsAllWords

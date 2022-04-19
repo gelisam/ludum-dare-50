@@ -438,10 +438,13 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
 
-  lift $ reactimate ( Mixer.play (assetsMoveSoundEffect assets)
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundMove)
                    <$ mconcat [tryMoveLeftE, tryMoveRightE, userTriesToMoveDownE]
                     )
-  lift $ reactimate ( Mixer.play (assetsGameOverSoundEffect assets)
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundLand)
+                   <$ landE
+                    )
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundGameOver)
                    <$ gameOverE
                     )
 

@@ -202,6 +202,12 @@ data HelpText
   | HelpSolution
   deriving (Eq, Generic, Ord, Show)
 
+data Sound
+  = SoundMove
+  | SoundLand
+  | SoundGameOver
+  deriving (Eq, Generic, Ord, Show)
+
 data World = World
   { worldStatus
       :: WorldStatus
