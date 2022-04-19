@@ -46,6 +46,25 @@ oUTLINE_SIZE
   = 2
 
 
+drawMaybeSolution
+  :: Renderer
+  -> Assets
+  -> Maybe String
+  -> Pos
+  -> IO ()
+drawMaybeSolution renderer assets maybeSolution center = do
+  for_ maybeSolution $ \solution -> do
+    let w :: CInt
+        w = fromIntegral $ length solution
+        topLeft
+          :: Pos
+        topLeft
+          = center - half ((V2 w 2 - 1) * bLOCK_STRIDE)
+    drawMaybeHelpText renderer assets (Just HelpSolution) (V2 (center^._x) (topLeft^._y))
+    for_ (zip [0..] solution) $ \(i, letter) -> do
+      let block = Block (Letter letter) CorrectSpot
+      drawBlock renderer assets (Just block) (topLeft + V2 i 1 * bLOCK_STRIDE)
+
 drawMaybeHelpText
   :: Renderer
   -> Assets
@@ -200,6 +219,8 @@ presentWorld window renderer assets (World {..}) = do
           -> assetsWinTexture assets
   drawCenteredTexture renderer bigTextTexture
     (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 3))
+  drawMaybeSolution renderer assets worldMaybeSolution
+    (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 3 + 70))
   drawMaybeHelpText renderer assets worldMaybeHelpText
     (V2 (1 * windowSize^._x `div` 3 - 10) (1 * windowSize^._y `div` 2))
   drawAlphabetColoring renderer assets worldAlphabetColoring

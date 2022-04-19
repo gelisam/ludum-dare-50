@@ -397,6 +397,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     , onEvent gameOverE $ setValue $ \() -> GameOver
     , onEvent winE      $ setValue $ \() -> Win
     ]
+  let maybeSolutionB
+        = go <$> correctWordB <*> worldStatusB
+        where
+          go correctWord worldStatus = do
+            guard (worldStatus == GameOver)
+            pure correctWord
 
   playerKnowsHowToPlaceBlocksB <- changingB False
     [ onEvent landE $ setValue $ \() -> True
@@ -425,6 +431,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let worldB
           = World
         <$> worldStatusB
+        <*> maybeSolutionB
         <*> maybeHelpTextB
         <*> alphabetColoringB
         <*> boardB

@@ -199,11 +199,14 @@ data HelpText
   | HelpPlaceBlock
   | HelpPlayAgain
   | HelpChangeShape
+  | HelpSolution
   deriving (Eq, Generic, Ord, Show)
 
 data World = World
   { worldStatus
       :: WorldStatus
+  , worldMaybeSolution
+      :: Maybe String
   , worldMaybeHelpText
       :: Maybe HelpText
   , worldAlphabetColoring
