@@ -10,7 +10,6 @@ import Data.Char qualified as Char
 import Data.Foldable
 import Data.Function.Extra
 import Data.Generics.Labels ()
-import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Traversable
@@ -196,18 +195,6 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           addQuestionMark Labelled
             = Letter '?'
 
-      improveLabels
-        :: Map CInt Char
-        -> [Label]
-        -> [Label]
-      improveLabels knownLetters
-        = iover itraversed $ \i label
-       -> case (label, Map.lookup (fromIntegral i) knownLetters) of
-            (Wild, Just knownLetter)
-              -> Letter knownLetter
-            _
-              -> label
-
   let landE
         = givenEvent tryMoveDownE
         $ withBehaviour boardB
@@ -223,69 +210,84 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt $ \((), piece)
        -> set (each . #blockStatus) InIncompleteWord
         $ renderPiece piece
-  let completedRowsE
-        :: Event [CInt]
-      completedRowsE
-        = givenEvent landingBlocksE
-        $ withSimultaneousEvent boardWithWildBlocksE
-        $ transformIt $ \(landingBlocks, board)
-       -> filter (isRowComplete board)
-        $ Set.toList
-        $ Set.fromList
-        $ fmap (view _y)
-        $ Map.keys
-        $ landingBlocks
-
-  guessesE <- changingRandomlyE undefined
-    [ onEvent completedRowsE
+  initialAnalyzedRowsE <- changingRandomlyE undefined
+    [ onEvent landingBlocksE
     $ withSimultaneousEvent boardWithWildBlocksE
+    $ withBehaviour correctWordB
     $ withBehaviour knownLettersB
-    $ setValueRandomly $ \((completedRows, board), knownLetters) -> do
+    $ setValueRandomly $ \(((landingBlocks, board), correctWord), knownLetters) -> do
+        let completedRows
+              :: [CInt]
+            completedRows
+              = filter (isRowComplete board)
+              $ Set.toList
+              $ Set.fromList
+              $ fmap (view _y)
+              $ Map.keys
+              $ landingBlocks
         for completedRows $ \y -> do
-          let getLabel x y = board ^?! ix (V2 x y) . #blockLabel
-          let labels = map (flip getLabel y) xCoordinates
-          let improvedLabels = improveLabels knownLetters labels
-          randomCompatibleWord assets improvedLabels >>= \case
-            Just completion -> do
-              pure completion
-            Nothing -> do
-              randomCompatibleWord assets labels >>= \case
-                Just completion -> do
-                  pure completion
-                Nothing -> do
-                  randomCompatibleGibberish labels
+          analyzedRow <- analyzeCompletedRow assets correctWord knownLetters board y
+          pure (y, analyzedRow)
     ]
-  let areRealWordsE
-        = givenEvent guessesE
-        $ transformIt
-        $ fmap (isRealWord assets)
-  let coloringsE
-        = givenEvent guessesE
-        $ withSimultaneousEvent areRealWordsE
-        $ withBehaviour correctWordB
-        $ transformIt $ \((guesses, areRealWords), correctWord)
-       -> flip fmap (zip guesses areRealWords) $ \(guess, isRealWord_)
-       -> if isRealWord_
-          then Just <$> analyzeGuess correctWord guess
-          else replicate 5 Nothing
+  let laterAnalyzedRowsE
+        = givenEvent rowAnimationCompleteE
+        $ withBehaviour remainingAnalyzedRowsB
+        $ transformIt $ \((), analyzedRows)
+       -> analyzedRows
+  let analyzedRowsE
+        :: Event [(CInt, AnalyzedRow)]
+      analyzedRowsE
+        = initialAnalyzedRowsE
+       <> laterAnalyzedRowsE
+  let analyzedRowE
+        = givenEvent analyzedRowsE
+        $ maybeKeepIt $ \analyzedRows -> do
+            case analyzedRows of
+              analyzedRow:_ -> do
+                pure $ analyzedRow
+              [] -> do
+                Nothing
+  remainingAnalyzedRowsB <- changingB []
+    [ onEvent analyzedRowsE
+    $ setValue id
+    , onEvent analyzedRowE
+    $ changeValue $ \(_, analyzedRows)
+   -> drop 1 analyzedRows
+    , onEvent rowActionsE
+    $ changeValue $ \(rowActions, analyzedRows)
+   -> Map.toList
+    $ performRowActions id rowActions
+    $ Map.fromList
+    $ analyzedRows
+    ]
+  completionE <- delayE 1 analyzedRowE
+  coloringE <- delayE 1 completionE
+  let nextRowActionsE
+        = givenEvent coloringE
+        $ transformIt $ \(y, analyzedRow)
+       -> Map.singleton y (rowAction analyzedRow)
+  rowActionsE <- delayE 1 nextRowActionsE
+  rowAnimationCompleteE <- delayE 1 (() <$ rowActionsE)
+
   alphabetColoringB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
-    , onEvent guessesE
-    $ withSimultaneousEvent coloringsE
-    $ changeState $ \(guesses, colorings) -> do
-        for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
-          for_ (zip guess maybeGuessResults) $ \(letter, maybeGuessResult) -> do
-            for_ maybeGuessResult $ \guessResult -> do
-              modify $ Map.insertWith max letter guessResult
+    , onEvent coloringE
+    $ changeState $ \(_, analyzedRow) -> do
+        let guess = rowCompletion analyzedRow
+        let maybeColoring = rowColoring analyzedRow
+        for_ maybeColoring $ \coloring -> do
+          for_ (zip guess coloring) $ \(letter, guessResult) -> do
+            modify $ Map.insertWith max letter guessResult
     ]
   knownLettersB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
-    , onEvent guessesE
-    $ withSimultaneousEvent coloringsE
-    $ changeState $ \(guesses, colorings) -> do
-        for_ (zip guesses colorings) $ \(guess, maybeGuessResults) -> do
-          for_ (zip3 xCoordinates guess maybeGuessResults) $ \(x, letter, maybeGuessResult) -> do
-            when (maybeGuessResult == Just Green) $ do
+    , onEvent completionE
+    $ changeState $ \(_, analyzedRow) -> do
+        let guess = rowCompletion analyzedRow
+        let maybeColoring = rowColoring analyzedRow
+        for_ maybeColoring $ \coloring -> do
+          for_ (zip3 xCoordinates guess coloring) $ \(x, letter, guessResult) -> do
+            when (guessResult == Green) $ do
               modify $ Map.insert x letter
     ]
 
@@ -366,37 +368,33 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt $ \(landingBlocks, board)
        -> board <> landingBlocks
   let boardWithLetterBlocksE
-        = givenEvent completedRowsE
-        $ withSimultaneousEvent guessesE
-        $ withSimultaneousEvent boardWithWildBlocksE
-        $ transformIt $ \((completedRows, guesses), board)
+        = givenEvent completionE
+        $ withBehaviour boardB
+        $ transformIt $ \((y, analyzedRow), board)
        -> flip execState board $ do
-            for_ (zip completedRows guesses) $ \(y, guess) -> do
-              for_ (zip [0..] guess) $ \(x, letter) -> do
-                ix (V2 x y) . #blockLabel .= Letter letter
+            let guess = rowCompletion analyzedRow
+            for_ (zip [0..] guess) $ \(x, letter) -> do
+              ix (V2 x y) . #blockLabel .= Letter letter
   let boardWithColoredBlocksE
-        = givenEvent completedRowsE
-        $ withSimultaneousEvent coloringsE
-        $ withSimultaneousEvent boardWithLetterBlocksE
-        $ transformIt $ \((completedRows, colorings), board)
+        = givenEvent coloringE
+        $ withBehaviour boardB
+        $ transformIt $ \((y, analyzedRow), board)
        -> flip execState board $ do
-            for_ (zip completedRows colorings) $ \(y, maybeGuessResults) -> do
-              for_ (zip [0..] maybeGuessResults) $ \(x, maybeGuessResult) -> do
-                for_ maybeGuessResult $ \guessResult -> do
-                  ix (V2 x y) . #blockStatus .= guessStatus guessResult
+            let maybeColoring = rowColoring analyzedRow
+            for_ maybeColoring $ \coloring -> do
+              for_ (zip [0..] coloring) $ \(x, guessResult) -> do
+                ix (V2 x y) . #blockStatus .= guessStatus guessResult
   let boardWithReorderedRowsE
-        = givenEvent completedRowsE
-        $ withSimultaneousEvent areRealWordsE
-        $ withSimultaneousEvent boardWithColoredBlocksE
-        $ transformIt $ \((completedRows, areRealWords), board)
-       -> flip performRowActions board
-        $ Map.fromList
-        $ flip fmap (zip completedRows areRealWords) $ \(y, isRealWord_)
-       -> (y, if isRealWord_ then MoveRowToBottom else DeleteRow)
+        = givenEvent rowActionsE
+        $ withBehaviour boardB
+        $ transformIt $ \(rowActions, board)
+       -> performRowActions _y rowActions board
   boardB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
-    , onEvent boardWithReorderedRowsE
-    $ setValue id
+    , onEvent boardWithWildBlocksE $ setValue id
+    , onEvent boardWithLetterBlocksE $ setValue id
+    , onEvent boardWithColoredBlocksE $ setValue id
+    , onEvent boardWithReorderedRowsE $ setValue id
     ]
 
   let gameOverE
@@ -404,9 +402,10 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ maybeKeepIt $ \landingBlocks -> do
             guard (isGameOver landingBlocks)
   let winE
-        = givenEvent coloringsE
-        $ maybeKeepIt $ \colorings -> do
-            guard $ any (all (== Just Green)) colorings
+        = givenEvent analyzedRowE
+        $ maybeKeepIt $ \(_, analyzedRow) -> do
+            coloring <- rowColoring analyzedRow
+            guard $ all (== Green) coloring
   worldStatusB <- changingB Playing
     [ onEvent resetE    $ setValue $ \() -> Playing
     , onEvent gameOverE $ setValue $ \() -> GameOver

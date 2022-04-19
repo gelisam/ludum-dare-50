@@ -1,10 +1,19 @@
-{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns #-}
+{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns, OverloadedLabels #-}
 module Tordle.Guess where
 
+import Control.Lens
+import Control.Monad.State
+import Data.Generics.Labels ()
 import Data.List (delete)
+import Data.Map (Map)
+import Data.Map qualified as Map
 import Data.Set qualified as Set
+import Foreign.C.Types (CInt)
+import Linear.V2 (V2(..))
+import System.Random.Stateful (StdGen)
 import Tordle.Assets
 import Tordle.Model
+import Tordle.Rng
 
 
 type Coloring
@@ -52,6 +61,75 @@ analyzeGuess correct guess
       | otherwise
         = Grey
         : go xs ys
+
+data AnalyzedRow = AnalyzedRow
+  { rowHadWilds
+      :: Bool
+  , rowCompletion
+      :: String
+  , rowColoring
+      :: Maybe Coloring
+  , rowAction
+      :: RowAction
+  }
+  deriving Show
+
+analyzeCompletedRow
+  :: MonadState StdGen m
+  => Assets
+  -> String
+  -> Map CInt Char
+  -> Board
+  -> CInt
+  -> m AnalyzedRow
+analyzeCompletedRow assets correctWord knownLetters board y = do
+  let getLabel x = board ^?! ix (V2 x y) . #blockLabel
+  let labels = map getLabel xCoordinates
+  let hadWilds = has (each . #_Wild) labels
+  let improvedLabels = improveLabels labels
+  completion <- randomCompatibleWord assets improvedLabels >>= \case
+    Just completion -> do
+      pure completion
+    Nothing -> do
+      randomCompatibleWord assets labels >>= \case
+        Just completion -> do
+          pure completion
+        Nothing -> do
+          randomCompatibleGibberish labels
+  if isRealWord assets completion
+    then do
+      pure $ AnalyzedRow
+        { rowHadWilds
+            = hadWilds
+        , rowCompletion
+            = completion
+        , rowColoring
+            = Just $ analyzeGuess correctWord completion
+        , rowAction
+            = MoveRowToBottom
+        }
+    else do
+      pure $ AnalyzedRow
+        { rowHadWilds
+            = hadWilds
+        , rowCompletion
+            = completion
+        , rowColoring
+            = Nothing
+        , rowAction
+            = DeleteRow
+        }
+  where
+    improveLabels
+      :: [Label]
+      -> [Label]
+    improveLabels
+      = iover itraversed $ \i label
+     -> case (label, Map.lookup (fromIntegral i) knownLetters) of
+          (Wild, Just knownLetter)
+            -> Letter knownLetter
+          _
+            -> label
 
 guessStatus
   :: GuessResult

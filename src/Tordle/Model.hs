@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedLabels, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedLabels, RankNTypes, RecordWildCards #-}
 module Tordle.Model where
 
 import Control.Lens
@@ -92,13 +92,16 @@ type Board
   = Map (V2 CInt) Block
 
 moveAllRows
-  :: Map CInt CInt  -- from/to; no duplicated to's, missing rows are deleted
-  -> Board
-  -> Board
-moveAllRows moves board
+  :: Ord k
+  => Lens' k CInt
+  -> Map CInt CInt  -- from/to; no duplicated to's, missing rows are deleted
+  -> Map k a
+  -> Map k a
+moveAllRows yLens moves board
   = Map.fromList
-      [ (V2 x y', block)
-      | (V2 x y, block) <- Map.toList board
+      [ (set yLens y' k, block)
+      | (k, block) <- Map.toList board
+      , let y = view yLens k
       , Just y' <- [Map.lookup y moves]
       ]
 
@@ -108,11 +111,13 @@ data RowAction
   deriving (Eq, Generic, Ord, Show)
 
 performRowActions
-  :: Map CInt RowAction
-  -> Board
-  -> Board
-performRowActions rowActions
-  = moveAllRows
+  :: Ord k
+  => Lens' k CInt
+  -> Map CInt RowAction
+  -> Map k a
+  -> Map k a
+performRowActions yLens rowActions
+  = moveAllRows yLens
   $ Map.fromList
   $ fst
   $ go aBOVE_BOARD_BUFFER []
