@@ -65,10 +65,9 @@ withAssets renderer body = do
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Place the block using the arrow keys"
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Press R to play again"
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Tip: try Tab / Shift+Tab before choosing a letter"
-            , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "Not a word"
             , With $ withTextTexture renderer helpTextFont (V4 0 0 0 255) "The answer was"
             ]
-            $ \[helpGuessLetter, helpPlaceBlock, helpPlayAgain, helpChangeShape, helpNotAWord, helpSolution] -> do
+            $ \[helpGuessLetter, helpPlaceBlock, helpPlayAgain, helpChangeShape, helpSolution] -> do
           let allChars = '?' : allLetters
           withMultiple
               [ With $ withTextTexture renderer letterFont (V4 0 0 0 255) (Text.singleton c)
@@ -95,7 +94,6 @@ withAssets renderer body = do
                         , (HelpPlaceBlock, helpPlaceBlock)
                         , (HelpPlayAgain, helpPlayAgain)
                         , (HelpChangeShape, helpChangeShape)
-                        , (HelpNotAWord, helpNotAWord)
                         , (HelpSolution, helpSolution)
                         ]
                 , assetsBlackLetterTextures

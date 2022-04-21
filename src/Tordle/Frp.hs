@@ -260,9 +260,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     $ Map.fromList
     $ analyzedRows
     ]
-  let completionE = analyzedRowE
-  completionAnimationCompleteE <- delayE 1 completionE
-  let coloringE = completionAnimationCompleteE
+  completionE <- delayE 1 analyzedRowE
+  coloringE <- delayE 1 completionE
   let nextRowActionsE
         = givenEvent coloringE
         $ transformIt $ \(y, analyzedRow)
@@ -370,7 +369,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
        -> board <> landingBlocks
   let boardWithLetterBlocksE
         = givenEvent completionE
-        $ withSimultaneousEvent boardWithWildBlocksE
+        $ withBehaviour boardB
         $ transformIt $ \((y, analyzedRow), board)
        -> flip execState board $ do
             let guess = rowCompletion analyzedRow
@@ -429,22 +428,14 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     [ onEvent (nextShapeE <> prevShapeE) $ setValue $ \() -> True
     ]
   maybeHelpTextB <- changingB (Just HelpGuessLetter)
-    [ onEvent completionE
-    $ changeState $ \(_, analyzedRow) -> do
-        when (rowColoring analyzedRow == Nothing) $ do
-          put $ Just HelpNotAWord
-    , onEvent (whenE ((== Just HelpNotAWord) <$> maybeHelpTextB) completionAnimationCompleteE)
-    $ setValue $ \_ -> Nothing
-    , onEvent (whenE (not <$> playerKnowsHowToPlaceBlocksB) pickLetterE)
+    [ onEvent (whenE (not <$> playerKnowsHowToPlaceBlocksB) pickLetterE)
     $ setValue $ \_ -> Just HelpPlaceBlock
-    , onEvent (whenE ((== Just HelpPlaceBlock) <$> maybeHelpTextB) landE)
+    , onEvent landE
     $ setValue $ \_ -> Nothing
     , onEvent (whenE (not <$> playerKnowsHowToChangeShapeB) gameOverE)
     $ setValue $ \_ -> Just HelpChangeShape
     , onEvent (whenE (not <$> playerKnowsHowToPlayAgainB) switchToEndScreenE)
     $ setValue $ \_ -> Just HelpPlayAgain
-    , onEvent resetE
-    $ setValue $ \_ -> Nothing
     ]
 
   let currentPieceB
