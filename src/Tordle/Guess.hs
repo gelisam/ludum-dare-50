@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns, OverloadedLabels #-}
+{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns, OverloadedLabels #-}
 module Tordle.Guess where
 
 import Control.Lens
@@ -9,6 +9,7 @@ import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Foreign.C.Types (CInt)
+import GHC.Generics (Generic)
 import Linear.V2 (V2(..))
 import System.Random.Stateful (StdGen)
 import Tordle.Assets
@@ -67,12 +68,14 @@ data AnalyzedRow = AnalyzedRow
       :: Bool
   , rowCompletion
       :: String
+  , rowExtraCompletions
+      :: [String]
   , rowColoring
       :: Maybe Coloring
   , rowAction
       :: RowAction
   }
-  deriving Show
+  deriving (Generic, Show)
 
 analyzeCompletedRow
   :: MonadState StdGen m
@@ -87,15 +90,18 @@ analyzeCompletedRow assets correctWord knownLetters board y = do
   let labels = map getLabel xCoordinates
   let hadWilds = has (each . #_Wild) labels
   let improvedLabels = improveLabels labels
-  completion <- randomCompatibleWord assets improvedLabels >>= \case
-    Just completion -> do
-      pure completion
-    Nothing -> do
-      randomCompatibleWord assets labels >>= \case
-        Just completion -> do
-          pure completion
-        Nothing -> do
-          randomCompatibleGibberish labels
+  let generateCompletion = do
+        randomCompatibleWord assets improvedLabels >>= \case
+          Just completion -> do
+            pure completion
+          Nothing -> do
+            randomCompatibleWord assets labels >>= \case
+              Just completion -> do
+                pure completion
+              Nothing -> do
+                randomCompatibleGibberish labels
+  completion <- generateCompletion
+  extraCompletions <- replicateM 8 generateCompletion
   if isRealWord assets completion
     then do
       pure $ AnalyzedRow
@@ -103,6 +109,8 @@ analyzeCompletedRow assets correctWord knownLetters board y = do
             = hadWilds
         , rowCompletion
             = completion
+        , rowExtraCompletions
+            = extraCompletions
         , rowColoring
             = Just $ analyzeGuess correctWord completion
         , rowAction
@@ -114,6 +122,8 @@ analyzeCompletedRow assets correctWord knownLetters board y = do
             = hadWilds
         , rowCompletion
             = completion
+        , rowExtraCompletions
+            = extraCompletions
         , rowColoring
             = Nothing
         , rowAction

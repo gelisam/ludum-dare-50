@@ -210,7 +210,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt $ \((), piece)
        -> set (each . #blockStatus) InIncompleteWord
         $ renderPiece piece
-  initialAnalyzedRowsE <- changingRandomlyE undefined
+
+  initialAnalyzedRowsE <- changingRandomlyE (error "initialAnalyzedRowsE: t=0 value")
     [ onEvent landingBlocksE
     $ withSimultaneousEvent boardWithWildBlocksE
     $ withBehaviour correctWordB
@@ -260,9 +261,31 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     $ Map.fromList
     $ analyzedRows
     ]
-  completionE <- delayE 0 analyzedRowE
-  completionAnimationCompleteE <- delayE 1 completionE
-  let coloringE = completionAnimationCompleteE
+
+  completionAnimationBeganE <- delayE 0 analyzedRowE
+  let initialCompletionE
+        = completionAnimationBeganE
+  let laterCompletionE
+        = givenEvent completionShownE
+        $ maybeKeepIt $ \(y, analyzedRow) -> do
+            guard (not $ null $ rowExtraCompletions analyzedRow)
+            let analyzedRow' = over #rowExtraCompletions (drop 1) analyzedRow
+            pure (y, analyzedRow')
+  let completionAnimationCompleteE
+        = givenEvent completionShownE
+        $ maybeKeepIt $ \(y, analyzedRow) -> do
+            guard (null $ rowExtraCompletions analyzedRow)
+            pure (y, analyzedRow)
+  let completionE
+        :: Event (CInt, AnalyzedRow)
+      completionE
+        = unionWith (error "completionE: simultaneous occurrences")
+            initialCompletionE
+            laterCompletionE
+  completionShownE <- delayE 0.2 completionE
+
+  let coloringE
+        = completionAnimationCompleteE
   let nextRowActionsE
         = givenEvent coloringE
         $ transformIt $ \(y, analyzedRow)
@@ -282,7 +305,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     ]
   knownLettersB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
-    , onEvent completionE
+    , onEvent completionAnimationCompleteE
     $ changeState $ \(_, analyzedRow) -> do
         let guess = rowCompletion analyzedRow
         let maybeColoring = rowColoring analyzedRow
@@ -373,7 +396,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ withBehaviour boardB
         $ transformIt $ \((y, analyzedRow), board)
        -> flip execState board $ do
-            let guess = rowCompletion analyzedRow
+            let guess = head (rowExtraCompletions analyzedRow ++ [rowCompletion analyzedRow])
             for_ (zip [0..] guess) $ \(x, letter) -> do
               ix (V2 x y) . #blockLabel .= Letter letter
   let boardWithColoredBlocksE
@@ -429,7 +452,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     [ onEvent (nextShapeE <> prevShapeE) $ setValue $ \() -> True
     ]
   maybeHelpTextB <- changingB (Just HelpGuessLetter)
-    [ onEvent completionE
+    [ onEvent completionAnimationBeganE
     $ changeState $ \(_, analyzedRow) -> do
         when (rowColoring analyzedRow == Nothing) $ do
           put $ Just HelpNotAWord
