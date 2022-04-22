@@ -260,7 +260,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     $ Map.fromList
     $ analyzedRows
     ]
-  let completionE = analyzedRowE
+  completionE <- delayE 0 analyzedRowE
   completionAnimationCompleteE <- delayE 1 completionE
   let coloringE = completionAnimationCompleteE
   let nextRowActionsE
@@ -370,7 +370,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
        -> board <> landingBlocks
   let boardWithLetterBlocksE
         = givenEvent completionE
-        $ withSimultaneousEvent boardWithWildBlocksE
+        $ withBehaviour boardB
         $ transformIt $ \((y, analyzedRow), board)
        -> flip execState board $ do
             let guess = rowCompletion analyzedRow
