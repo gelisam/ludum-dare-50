@@ -204,6 +204,7 @@ data HelpText
   | HelpPlaceBlock
   | HelpPlayAgain
   | HelpChangeShape
+  | HelpNotAWord
   | HelpSolution
   deriving (Eq, Generic, Ord, Show)
 
