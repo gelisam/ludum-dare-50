@@ -262,9 +262,17 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     $ analyzedRows
     ]
 
-  completionAnimationBeganE <- delayE 0 analyzedRowE
-  let initialCompletionE
-        = completionAnimationBeganE
+  let completionAnimationBeganE
+        = givenEvent analyzedRowE
+        $ maybeKeepIt $ \(y, analyzedRow) -> do
+            guard (rowHadWilds analyzedRow)
+            pure (y, analyzedRow)
+  let noCompletionAnimationNeededE
+       = givenEvent analyzedRowE
+       $ maybeKeepIt $ \(y, analyzedRow) -> do
+           guard (not $ rowHadWilds analyzedRow)
+           pure (y, analyzedRow)
+  initialCompletionE <- delayE 0 completionAnimationBeganE
   let laterCompletionE
         = givenEvent completionShownE
         $ maybeKeepIt $ \(y, analyzedRow) -> do
@@ -283,15 +291,19 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             initialCompletionE
             laterCompletionE
   completionShownE <- delayE 0.2 completionE
+  let completionPhaseOverE
+        = unionWith (error "completionPhaseOverE: simultaneous occurrences")
+             completionAnimationCompleteE
+             noCompletionAnimationNeededE
 
   let guessE
-        = givenEvent completionAnimationCompleteE
+        = givenEvent completionPhaseOverE
         $ maybeKeepIt $ \(y, analyzedRow) -> do
             let completion = rowCompletion analyzedRow
             coloring <- rowColoring analyzedRow
             pure (y, AnalyzedGuess completion coloring)
   let nonWordE
-        = givenEvent completionAnimationCompleteE
+        = givenEvent completionPhaseOverE
         $ maybeKeepIt $ \(y, analyzedRow) -> do
             let completion = rowCompletion analyzedRow
             guard (rowColoring analyzedRow == Nothing)
