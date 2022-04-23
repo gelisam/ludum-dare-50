@@ -14,7 +14,7 @@ import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Traversable
 import Foreign.C.Types (CInt)
-import Linear.V2 (V2(..), _y)
+import Linear.V2 (V2(..), _x, _y)
 import Reactive.Banana.Combinators
 import Reactive.Banana.Extra
 import Reactive.Banana.Frameworks
@@ -284,10 +284,29 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             laterCompletionE
   completionShownE <- delayE 0.2 completionE
 
+  coloringAnimationBeganE <- delayE 0.5 completionAnimationCompleteE
+  let initialColoringE
+        = givenEvent coloringAnimationBeganE
+        $ transformIt $ \(y, analyzedRow)
+       -> (0, y, analyzedRow)
+  let laterColoringE
+        = givenEvent coloringShownE
+        $ maybeKeepIt $ \(x, y, analyzedRow) -> do
+            guard (x < mAIN_BOARD_SIZE^._x)
+            pure (x+1, y, analyzedRow)
+  let coloringAnimationCompleteE
+        = givenEvent coloringShownE
+        $ maybeKeepIt $ \(x, y, analyzedRow) -> do
+            guard (x == mAIN_BOARD_SIZE^._x - 1)
+            pure (y, analyzedRow)
   let coloringE
-        = completionAnimationCompleteE
+        = unionWith (error "coloringE: simultaneous occurrences")
+            initialColoringE
+            laterColoringE
+  coloringShownE <- delayE 0.3 coloringE
+
   let nextRowActionsE
-        = givenEvent coloringE
+        = givenEvent coloringAnimationCompleteE
         $ transformIt $ \(y, analyzedRow)
        -> Map.singleton y (rowAction analyzedRow)
   rowActionsE <- delayE 1 nextRowActionsE
@@ -295,7 +314,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
   alphabetColoringB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
-    , onEvent coloringE
+    , onEvent coloringAnimationCompleteE
     $ changeState $ \(_, analyzedRow) -> do
         let guess = rowCompletion analyzedRow
         let maybeColoring = rowColoring analyzedRow
@@ -402,12 +421,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let boardWithColoredBlocksE
         = givenEvent coloringE
         $ withBehaviour boardB
-        $ transformIt $ \((y, analyzedRow), board)
+        $ transformIt $ \((x, y, analyzedRow), board)
        -> flip execState board $ do
             let maybeColoring = rowColoring analyzedRow
             for_ maybeColoring $ \coloring -> do
-              for_ (zip [0..] coloring) $ \(x, guessResult) -> do
-                ix (V2 x y) . #blockStatus .= guessStatus guessResult
+              let guessResult = coloring !! fromIntegral x
+              ix (V2 x y) . #blockStatus .= guessStatus guessResult
   let boardWithReorderedRowsE
         = givenEvent rowActionsE
         $ withBehaviour boardB
