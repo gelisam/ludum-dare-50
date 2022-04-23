@@ -317,7 +317,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let laterColoringE
         = givenEvent coloringShownE
         $ maybeKeepIt $ \(x, y, analyzedRow) -> do
-            guard (x < mAIN_BOARD_SIZE^._x)
+            guard (x < mAIN_BOARD_SIZE^._x - 1)
             pure (x+1, y, analyzedRow)
   let coloringAnimationCompleteE
         = givenEvent coloringShownE
@@ -328,6 +328,13 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = unionWith (error "coloringE: simultaneous occurrences")
             initialColoringE
             laterColoringE
+  let greenLetterE
+        = givenEvent coloringE
+        $ maybeKeepIt $ \(x, _, analyzedGuess) -> do
+            let coloring = guessColoring analyzedGuess
+            let guessResult = coloring !! fromIntegral x
+            guard (guessResult == Green)
+            pure x
   coloringShownE <- delayE 0.3 coloringE
 
   let nonWordAnimationBeganE
@@ -541,6 +548,9 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                     )
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundLand)
                    <$ landE
+                    )
+  lift $ reactimate ( (\x -> Mixer.play (assets ^?! #assetsSoundEffects . ix (SoundGreenLetter x)))
+                  <$> greenLetterE
                     )
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundGameOver)
                    <$ gameOverE

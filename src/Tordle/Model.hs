@@ -211,6 +211,7 @@ data HelpText
 data Sound
   = SoundMove
   | SoundLand
+  | SoundGreenLetter CInt
   | SoundGameOver
   deriving (Eq, Generic, Ord, Show)
 
