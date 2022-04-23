@@ -77,6 +77,14 @@ data AnalyzedRow = AnalyzedRow
   }
   deriving (Generic, Show)
 
+data AnalyzedGuess = AnalyzedGuess
+  { guessCompletion
+      :: String
+  , guessColoring
+      :: Coloring
+  }
+  deriving (Generic, Show)
+
 analyzeCompletedRow
   :: MonadState StdGen m
   => Assets
