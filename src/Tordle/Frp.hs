@@ -514,16 +514,20 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             ix (V2 x y) . #blockStatus .= guessStatus guessResult
             ix (V2 x y) . #blockOffset . _y .= - (1 - (2*t-1)**2)
   let boardWithMovingRowsE
-        = givenEvent rowActionsEasingE
+        = givenEvent rowActionEasingE
         $ withBehaviour boardB
-        $ transformIt $ \((t, rowActions), board)
-       -> animateRowActions rowActions t board
+        $ transformIt $ \((t, (y, rowAction)), board)
+       -> flip execState board $ do
+            each . #blockZIndex .= 0
+            for_ xCoordinates $ \x -> do
+              ix (V2 x y) . #blockZIndex .= 1
+            id %= animateRowActions (Map.singleton y rowAction) t
   let boardWithReorderedRowsE
         = givenEvent rowAnimationCompleteE
         $ withBehaviour boardB
-        $ transformIt $ \(rowActions, board)
+        $ transformIt $ \((y, rowAction), board)
        -> resetAllOffsets
-        $ performRowActions _y rowActions board
+        $ performRowActions _y (Map.singleton y rowAction) board
   boardB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
     , onEvent boardWithWildBlocksE $ setValue id
