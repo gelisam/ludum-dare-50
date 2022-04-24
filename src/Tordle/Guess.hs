@@ -4,7 +4,7 @@ module Tordle.Guess where
 import Control.Lens
 import Control.Monad.State
 import Data.Generics.Labels ()
-import Data.List (delete)
+import Data.List (delete, nub)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Set qualified as Set
@@ -110,7 +110,7 @@ analyzeCompletedRow assets correctWord knownLetters board y = do
                 randomCompatibleGibberish labels
   completion <- generateCompletion
   extraCompletions <- if hadWilds
-    then replicateM 8 generateCompletion
+    then nub <$> replicateM 8 generateCompletion
     else pure []
   if isRealWord assets completion
     then do
