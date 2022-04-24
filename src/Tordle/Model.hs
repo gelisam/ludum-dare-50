@@ -211,6 +211,7 @@ data HelpText
 data Sound
   = SoundMove
   | SoundLand
+  | SoundNotAWord
   | SoundGreyLetter
   | SoundYellowLetter
   | SoundGreenLetter CInt

@@ -51,6 +51,7 @@ withAssets renderer body = do
     withMultiple
         [ With $ withSoundEffect "assets/move.wav"
         , With $ withSoundEffect "assets/attach.wav"
+        , With $ withSoundEffect "assets/not-a-word.wav"
         , With $ withSoundEffect "assets/grey.wav"
         , With $ withSoundEffect "assets/yellow.wav"
         , With $ withSoundEffect "assets/win-1.wav"
@@ -60,7 +61,7 @@ withAssets renderer body = do
         , With $ withSoundEffect "assets/win-5.wav"
         , With $ withSoundEffect "assets/lose.wav"
         ]
-        $ \[soundMove, soundLand, soundGrey, soundYellow, soundWin1, soundWin2, soundWin3, soundWin4, soundWin5, soundGameOver] -> do
+        $ \[soundMove, soundLand, soundNotAWord, soundGrey, soundYellow, soundWin1, soundWin2, soundWin3, soundWin4, soundWin5, soundGameOver] -> do
       withMultiple
           [ With $ withTextTexture renderer titleFont (V4 0 0 0 255) "Tordle"
           , With $ withTextTexture renderer titleFont (V4 0 0 0 255) "Game Over"
@@ -113,6 +114,7 @@ withAssets renderer body = do
                     = Map.fromList
                         [ (SoundMove, soundMove)
                         , (SoundLand, soundLand)
+                        , (SoundNotAWord, soundNotAWord)
                         , (SoundGreyLetter, soundGrey)
                         , (SoundYellowLetter, soundYellow)
                         , (SoundGreenLetter 0, soundWin1)

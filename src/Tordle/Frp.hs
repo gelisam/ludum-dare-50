@@ -563,6 +563,9 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundLand)
                    <$ landE
                     )
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundNotAWord)
+                   <$ nonWordE
+                    )
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundGreyLetter)
                    <$ greyLetterE
                     )
