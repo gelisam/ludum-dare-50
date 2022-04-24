@@ -119,8 +119,9 @@ animateAllRows t moves board
       [ (V2 x y, block')
       | (V2 x y, block) <- Map.toList board
       , Just y' <- [Map.lookup y moves]
+      , let t' = if y' > y then t*t else t  -- accelerate downward motions
       , let block' = set (#blockOffset . _y)
-                         (t * (fromIntegral y' - fromIntegral y))
+                         (t' * (fromIntegral y' - fromIntegral y))
                          block
       ]
 
