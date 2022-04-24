@@ -109,7 +109,9 @@ analyzeCompletedRow assets correctWord knownLetters board y = do
               Nothing -> do
                 randomCompatibleGibberish labels
   completion <- generateCompletion
-  extraCompletions <- replicateM 8 generateCompletion
+  extraCompletions <- if hadWilds
+    then replicateM 8 generateCompletion
+    else pure []
   if isRealWord assets completion
     then do
       pure $ AnalyzedRow
