@@ -141,6 +141,7 @@ drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures
       drawSolidBlock renderer pos' blue
       drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
     InIncompleteWord -> do
+      drawSolidBlock renderer pos' white
       drawOutlineBlock renderer pos' gray
       drawLabel renderer assetsBlackLetterTextures blockLabel pos'
     NotInWord -> do
