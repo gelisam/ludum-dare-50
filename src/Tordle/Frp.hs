@@ -362,7 +362,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
 
   let nonWordAnimationBeganE
         = nonWordE
-  (_, nonWordAnimationCompleteE) <- delayE 1 nonWordAnimationBeganE
+  (nonWordEasingE, nonWordAnimationCompleteE) <- delayE 0.8 nonWordAnimationBeganE
 
   let moveToBottomE
         = givenEvent coloringAnimationCompleteE
@@ -491,6 +491,13 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             let guess = head (rowExtraCompletions analyzedRow ++ [rowCompletion analyzedRow])
             for_ (zip [0..] guess) $ \(x, letter) -> do
               ix (V2 x y) . #blockLabel .= Letter letter
+  let boardWithShakingBlocksE
+        = givenEvent nonWordEasingE
+        $ withBehaviour boardB
+        $ transformIt $ \((t, (y, _)), board)
+       -> flip execState board $ do
+            for_ xCoordinates $ \x -> do
+              ix (V2 x y) . #blockOffset . _x .= 0.25 * sin (16 * t * pi)
   let boardWithColoredBlocksE
         = givenEvent coloringEasingE
         $ withBehaviour boardB
@@ -509,6 +516,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
     [ onEvent resetE $ setValue $ \() -> Map.empty
     , onEvent boardWithWildBlocksE $ setValue id
     , onEvent boardWithLetterBlocksE $ setValue id
+    , onEvent boardWithShakingBlocksE $ setValue id
     , onEvent boardWithColoredBlocksE $ setValue id
     , onEvent boardWithReorderedRowsE $ setValue id
     ]
