@@ -21,6 +21,7 @@ library
                     , Tordle.Model
                     , Tordle.Polynomino
                     , Tordle.Rng
+                    , Tordle.Share
                     , Tordle.Tetromino
                     , Data.Function.Extra
                     , Linear.Extra

@@ -168,3 +168,15 @@ maybeGuessStatus Nothing
   = InIncompleteWord
 maybeGuessStatus (Just guessResult)
   = guessStatus guessResult
+
+maybeStatusGuess
+  :: BlockStatus
+  -> Maybe GuessResult
+maybeStatusGuess CorrectSpot
+  = Just Green
+maybeStatusGuess WrongSpot
+  = Just Yellow
+maybeStatusGuess NotInWord
+  = Just Grey
+maybeStatusGuess _
+  = Nothing

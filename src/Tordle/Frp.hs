@@ -28,6 +28,7 @@ import Tordle.Dir
 import Tordle.Draw
 import Tordle.Guess
 import Tordle.Model
+import Tordle.Share
 import Tordle.Rng
 import Tordle.Tetromino
 
@@ -370,6 +371,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let rowAnimationBeganE
         = rowActionsE
   rowAnimationCompleteE <- delayE 1 (() <$ rowAnimationBeganE)
+  let winAnimationCompleteE
+        = whenE ( (&&)
+              <$> ((== Win) <$> worldStatusB)
+              <*> (null <$> remainingAnalyzedRowsB)
+                )
+        $ rowAnimationCompleteE
 
   alphabetColoringB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
@@ -578,5 +585,6 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundGameOver)
                    <$ gameOverE
                     )
+  lift $ reactimate (printSharingText <$> boardB <@ winAnimationCompleteE)
 
   lift $ reactimate (quit <$ keyEscE)
