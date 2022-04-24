@@ -1,9 +1,10 @@
-{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, OverloadedLabels, RecordWildCards, ScopedTypeVariables #-}
 module Tordle.Draw where
 
 import Control.Lens
 import Control.Monad (when)
 import Data.Foldable (for_)
+import Data.Generics.Labels ()
 import Data.Map ((!), Map)
 import Data.Map qualified as Map
 import Data.StateVar (($=), get)
@@ -61,7 +62,7 @@ drawMaybeSolution renderer assets maybeSolution center = do
           = center - half ((V2 w 2 - 1) * bLOCK_STRIDE)
     drawMaybeHelpText renderer assets (Just HelpSolution) (V2 (center^._x) (topLeft^._y))
     for_ (zip [0..] solution) $ \(i, letter) -> do
-      let block = Block (Letter letter) CorrectSpot 0
+      let block = Block (Letter letter) CorrectSpot 0 0
       drawBlock renderer assets block (topLeft + V2 i 1 * bLOCK_STRIDE)
 
 drawMaybeHelpText
@@ -204,7 +205,13 @@ drawBoard
   -> IO ()
 drawBoard renderer assets board center = do
   drawGrid renderer center
-  drawBoardLayer renderer assets board center
+  let maybeMinZIndex = minimumOf (each . #blockZIndex) board
+  let maybeMaxZIndex = maximumOf (each . #blockZIndex) board
+  for_ maybeMinZIndex $ \minZIndex -> do
+    for_ maybeMaxZIndex $ \maxZIndex -> do
+      for_ [minZIndex..maxZIndex] $ \zIndex -> do
+        let board' = Map.filter ((== zIndex) . blockZIndex) board
+        drawBoardLayer renderer assets board' center
 
 drawAlphabetColoring
   :: Renderer
@@ -229,7 +236,7 @@ drawAlphabetColoring renderer assets alphabedColoring center = do
           = center - half ((V2 w 3 - 1) * bLOCK_STRIDE)
     for_ (zip [0..] row) $ \(i, letter) -> do
       let maybeGuessResult = Map.lookup letter alphabedColoring
-      let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult) 0
+      let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult) 0 0
       drawBlock renderer assets block (topLeft + V2 i j * bLOCK_STRIDE)
 
 presentWorld

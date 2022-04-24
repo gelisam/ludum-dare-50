@@ -87,6 +87,8 @@ data Block = Block
       :: BlockStatus
   , blockOffset
       :: V2 Double
+  , blockZIndex
+      :: CInt  -- ^ bigger values are drawn in front
   }
   deriving (Eq, Generic, Ord, Show)
 
@@ -218,7 +220,7 @@ renderPiece
   -> Board
 renderPiece (Piece {..})
   = Map.fromList
-      [ (piecePos + pos, Block label Falling 0)
+      [ (piecePos + pos, Block label Falling 0 0)
       | (pos, label) <- Map.toList $ unFixedTetromino $ runOneSidedTetromino pieceBlocks
       ]
 

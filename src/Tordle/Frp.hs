@@ -368,19 +368,23 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let moveToBottomE
         = givenEvent coloringAnimationCompleteE
         $ transformIt $ \(y, _)
-       -> Map.singleton y MoveRowToBottom
+       -> (y, MoveRowToBottom)
   let deleteRowE
         = givenEvent nonWordAnimationCompleteE
         $ transformIt $ \(y, _)
-       -> Map.singleton y DeleteRow
-  let nextRowActionsE
+       -> (y, DeleteRow)
+  let nextRowActionE
         = unionWith (error "rowActionsE: simultaneous occurrences")
             moveToBottomE
             deleteRowE
-  (_, rowAnimationBeganE) <- delayE 0 nextRowActionsE
-  (rowActionsEasingE, rowAnimationAlmostCompleteE) <- delayE 1 rowAnimationBeganE
-  let rowActionsE
+  (_, rowAnimationBeganE) <- delayE 0 nextRowActionE
+  (rowActionEasingE, rowAnimationAlmostCompleteE) <- delayE 1 rowAnimationBeganE
+  let rowActionE
         = rowAnimationAlmostCompleteE
+  let rowActionsE
+        = givenEvent rowActionE
+        $ transformIt $ \(y, rowAction)
+       -> Map.singleton y rowAction
   (_, rowAnimationCompleteE) <- delayE 0 rowAnimationAlmostCompleteE
   let winAnimationCompleteE
         = whenE ( (&&)
