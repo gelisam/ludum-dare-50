@@ -107,20 +107,36 @@ moveAllRows yLens moves board
       , Just y' <- [Map.lookup y moves]
       ]
 
+animateAllRows
+  :: Double
+  -> Map CInt CInt  -- from/to; no duplicated to's, missing rows are deleted
+  -> Board
+  -> Board
+animateAllRows t moves
+  = Map.mapWithKey $ \(V2 _ y)
+ -> set (#blockOffset . _y)
+  $ case Map.lookup y moves of
+      Nothing
+        -> 999  -- way offscreen
+      Just y'
+        -> t * (fromIntegral y' - fromIntegral y)
+
+resetAllOffsets
+  :: Board
+  -> Board
+resetAllOffsets
+  = set (each . #blockOffset) 0
+
 data RowAction
   = DeleteRow
   | MoveRowToBottom
   deriving (Eq, Generic, Ord, Show)
 
-performRowActions
-  :: Ord k
-  => Lens' k CInt
-  -> Map CInt RowAction
-  -> Map k a
-  -> Map k a
-performRowActions yLens rowActions
-  = moveAllRows yLens
-  $ Map.fromList
+rowActionDestinations
+  :: Map CInt RowAction
+  -> Map CInt CInt
+rowActionDestinations rowActions
+  = Map.fromList
   $ fst
   $ go aBOVE_BOARD_BUFFER []
   where
@@ -154,6 +170,25 @@ performRowActions yLens rowActions
             Just MoveRowToBottom
               -> let (moves, dy) = go (y+1) (bottom ++ [y])
               in (moves, dy+1)
+
+performRowActions
+  :: Ord k
+  => Lens' k CInt
+  -> Map CInt RowAction
+  -> Map k a
+  -> Map k a
+performRowActions yLens rowActions
+  = moveAllRows yLens
+  $ rowActionDestinations rowActions
+
+animateRowActions
+  :: Map CInt RowAction
+  -> Double
+  -> Board
+  -> Board
+animateRowActions rowActions t
+  = animateAllRows t
+  $ rowActionDestinations rowActions
 
 data Piece = Piece
   { pieceBlocks

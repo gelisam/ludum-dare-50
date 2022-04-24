@@ -242,7 +242,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
   let laterAnalyzedRowsE
         = givenEvent rowAnimationCompleteE
         $ withBehaviour remainingAnalyzedRowsB
-        $ transformIt $ \((), analyzedRows)
+        $ transformIt $ \(_, analyzedRows)
        -> analyzedRows
   let analyzedRowsE
         :: Event [(CInt, AnalyzedRow)]
@@ -259,7 +259,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                 Nothing
   remainingAnalyzedRowsB <- changingB []
     [ onEvent analyzedRowsE
-    $ setValue id
+    $ setValue $ \analyzedRows
+   -> analyzedRows
     , onEvent analyzedRowE
     $ changeValue $ \(_, analyzedRows)
    -> drop 1 analyzedRows
@@ -376,16 +377,17 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = unionWith (error "rowActionsE: simultaneous occurrences")
             moveToBottomE
             deleteRowE
-  (_, rowActionsE) <- delayE 0 nextRowActionsE
-  let rowAnimationBeganE
-        = rowActionsE
-  (_, rowAnimationCompleteE) <- delayE 1 (() <$ rowAnimationBeganE)
+  (_, rowAnimationBeganE) <- delayE 0 nextRowActionsE
+  (rowActionsEasingE, rowAnimationAlmostCompleteE) <- delayE 1 rowAnimationBeganE
+  let rowActionsE
+        = rowAnimationAlmostCompleteE
+  (_, rowAnimationCompleteE) <- delayE 0 rowAnimationAlmostCompleteE
   let winAnimationCompleteE
         = whenE ( (&&)
               <$> ((== Win) <$> worldStatusB)
               <*> (null <$> remainingAnalyzedRowsB)
                 )
-        $ rowAnimationCompleteE
+        $ (() <$ rowAnimationCompleteE)
 
   alphabetColoringB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
@@ -507,17 +509,24 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             let guessResult = coloring !! fromIntegral x
             ix (V2 x y) . #blockStatus .= guessStatus guessResult
             ix (V2 x y) . #blockOffset . _y .= - (1 - (2*t-1)**2)
+  let boardWithMovingRowsE
+        = givenEvent rowActionsEasingE
+        $ withBehaviour boardB
+        $ transformIt $ \((t, rowActions), board)
+       -> animateRowActions rowActions t board
   let boardWithReorderedRowsE
-        = givenEvent rowActionsE
+        = givenEvent rowAnimationCompleteE
         $ withBehaviour boardB
         $ transformIt $ \(rowActions, board)
-       -> performRowActions _y rowActions board
+       -> resetAllOffsets
+        $ performRowActions _y rowActions board
   boardB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
     , onEvent boardWithWildBlocksE $ setValue id
     , onEvent boardWithLetterBlocksE $ setValue id
     , onEvent boardWithShakingBlocksE $ setValue id
     , onEvent boardWithColoredBlocksE $ setValue id
+    , onEvent boardWithMovingRowsE $ setValue id
     , onEvent boardWithReorderedRowsE $ setValue id
     ]
 
