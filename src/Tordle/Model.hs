@@ -112,14 +112,15 @@ animateAllRows
   -> Map CInt CInt  -- from/to; no duplicated to's, missing rows are deleted
   -> Board
   -> Board
-animateAllRows t moves
-  = Map.mapWithKey $ \(V2 _ y)
- -> set (#blockOffset . _y)
-  $ case Map.lookup y moves of
-      Nothing
-        -> 999  -- way offscreen
-      Just y'
-        -> t * (fromIntegral y' - fromIntegral y)
+animateAllRows t moves board
+  = Map.fromList
+      [ (V2 x y, block')
+      | (V2 x y, block) <- Map.toList board
+      , Just y' <- [Map.lookup y moves]
+      , let block' = set (#blockOffset . _y)
+                         (t * (fromIntegral y' - fromIntegral y))
+                         block
+      ]
 
 resetAllOffsets
   :: Board

@@ -6,7 +6,6 @@ import Control.Monad (when)
 import Data.Foldable (for_)
 import Data.Map ((!), Map)
 import Data.Map qualified as Map
-import Data.Maybe (isJust)
 import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
 import Linear.Extra
@@ -63,7 +62,7 @@ drawMaybeSolution renderer assets maybeSolution center = do
     drawMaybeHelpText renderer assets (Just HelpSolution) (V2 (center^._x) (topLeft^._y))
     for_ (zip [0..] solution) $ \(i, letter) -> do
       let block = Block (Letter letter) CorrectSpot 0
-      drawBlock renderer assets (Just block) (topLeft + V2 i 1 * bLOCK_STRIDE)
+      drawBlock renderer assets block (topLeft + V2 i 1 * bLOCK_STRIDE)
 
 drawMaybeHelpText
   :: Renderer
@@ -122,42 +121,63 @@ drawLabel renderer letterTextures label pos = do
     Wild -> do
       pure ()
 
+drawGridBlock
+  :: Renderer
+  -> Pos
+  -> IO ()
+drawGridBlock renderer pos = do
+  drawOutlineBlock renderer pos lightGray
+
 drawBlock
   :: Renderer
   -> Assets
-  -> Maybe Block
+  -> Block
   -> Pos
   -> IO ()
-drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures}) maybeBlock pos = do
-  case maybeBlock of
-    Nothing -> do
-      drawOutlineBlock renderer pos lightGray
-    Just (Block {..}) -> do
-      let pos' = pos + fmap round (bLOCK_STRIDE * blockOffset)
-      case blockStatus of
-        Falling -> do
-          drawSolidBlock renderer pos' blue
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
-        InIncompleteWord -> do
-          drawOutlineBlock renderer pos' gray
-          drawLabel renderer assetsBlackLetterTextures blockLabel pos'
-        NotInWord -> do
-          drawSolidBlock renderer pos' gray
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
-        WrongSpot -> do
-          drawSolidBlock renderer pos' yellow
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
-        CorrectSpot -> do
-          drawSolidBlock renderer pos' green
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
+drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures}) (Block {..}) pos = do
+  let pos' = pos + fmap round (bLOCK_STRIDE * blockOffset)
+  case blockStatus of
+    Falling -> do
+      drawSolidBlock renderer pos' blue
+      drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
+    InIncompleteWord -> do
+      drawOutlineBlock renderer pos' gray
+      drawLabel renderer assetsBlackLetterTextures blockLabel pos'
+    NotInWord -> do
+      drawSolidBlock renderer pos' gray
+      drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
+    WrongSpot -> do
+      drawSolidBlock renderer pos' yellow
+      drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
+    CorrectSpot -> do
+      drawSolidBlock renderer pos' green
+      drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
 
-drawBoard
+drawGrid
+  :: Renderer
+  -> Pos
+  -> IO ()
+drawGrid renderer center = do
+  let topLeft
+        :: Pos
+      topLeft
+        = center - half ((pHANTOM_BOARD_SIZE - 1) * bLOCK_STRIDE)
+  for_ [0..fULL_BOARD_SIZE^._y - 1] $ \j -> do
+    for_ [0..fULL_BOARD_SIZE^._x -1] $ \i -> do
+      let ij
+            :: V2 CInt
+          ij
+            = V2 i j
+      when (inMainBoard ij) $ do
+        drawGridBlock renderer (topLeft + ij * bLOCK_STRIDE)
+
+drawBoardLayer
   :: Renderer
   -> Assets
   -> Board
   -> Pos
   -> IO ()
-drawBoard renderer assets board center = do
+drawBoardLayer renderer assets board center = do
   let topLeft
         :: Pos
       topLeft
@@ -172,8 +192,18 @@ drawBoard renderer assets board center = do
             :: Maybe Block
           maybeBlock
             = Map.lookup ij board
-      when (inMainBoard ij || isJust maybeBlock) $ do
-        drawBlock renderer assets maybeBlock (topLeft + ij * bLOCK_STRIDE)
+      for_ maybeBlock $ \block -> do
+        drawBlock renderer assets block (topLeft + ij * bLOCK_STRIDE)
+
+drawBoard
+  :: Renderer
+  -> Assets
+  -> Board
+  -> Pos
+  -> IO ()
+drawBoard renderer assets board center = do
+  drawGrid renderer center
+  drawBoardLayer renderer assets board center
 
 drawAlphabetColoring
   :: Renderer
@@ -199,7 +229,7 @@ drawAlphabetColoring renderer assets alphabedColoring center = do
     for_ (zip [0..] row) $ \(i, letter) -> do
       let maybeGuessResult = Map.lookup letter alphabedColoring
       let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult) 0
-      drawBlock renderer assets (Just block) (topLeft + V2 i j * bLOCK_STRIDE)
+      drawBlock renderer assets block (topLeft + V2 i j * bLOCK_STRIDE)
 
 presentWorld
   :: Window
