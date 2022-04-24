@@ -126,7 +126,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         :: MonadMoment m
         => Double
         -> Event a
-        -> m (Event a)
+        -> m (Event (Double, a), Event a)
       delayE delay startE = mdo
         nextTickB <- changingB Nothing
           [ onEvent delayedE
@@ -137,6 +137,14 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
           $ setValue $ \(a, t)
          -> Just (a, t + delay)
           ]
+        let easingE
+              = givenEvent timeE
+              $ withBehaviour nextTickB
+              $ maybeKeepIt $ \(t, maybeNextTick) -> do
+                  (a, nextTick) <- maybeNextTick
+                  let t0 = nextTick - delay
+                  let fraction = ((t - t0) / delay) `min` 1
+                  pure (fraction, a)
         let delayedE
               = givenEvent timeE
               $ withBehaviour nextTickB
@@ -144,8 +152,8 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                   (a, nextTick) <- maybeNextTick
                   guard (t >= nextTick)
                   pure a
-        pure delayedE
-  gravityTickE <- delayE 1 (userTriesToMoveDownE <> gravityTickE <> switchToPlaceE)
+        pure (easingE, delayedE)
+  (_, gravityTickE) <- delayE 1 (userTriesToMoveDownE <> gravityTickE <> switchToPlaceE)
 
   let onBlankSpace
         :: Board
@@ -273,7 +281,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
        $ maybeKeepIt $ \(y, analyzedRow) -> do
            guard (not $ rowHadWilds analyzedRow)
            pure (y, analyzedRow)
-  initialCompletionE <- delayE 0 completionAnimationBeganE
+  (_, initialCompletionE) <- delayE 0 completionAnimationBeganE
   let laterCompletionE
         = givenEvent completionShownE
         $ maybeKeepIt $ \(y, analyzedRow) -> do
@@ -291,7 +299,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = unionWith (error "completionE: simultaneous occurrences")
             initialCompletionE
             laterCompletionE
-  completionShownE <- delayE 0.2 completionE
+  (_, completionShownE) <- delayE 0.2 completionE
   let completionPhaseOverE
         = unionWith (error "completionPhaseOverE: simultaneous occurrences")
              completionAnimationCompleteE
@@ -310,7 +318,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             guard (rowColoring analyzedRow == Nothing)
             pure (y, completion)
 
-  coloringAnimationBeganE <- delayE 0.5 guessE
+  (_, coloringAnimationBeganE) <- delayE 0.5 guessE
   let initialColoringE
         = givenEvent coloringAnimationBeganE
         $ transformIt $ \(y, analyzedRow)
@@ -350,11 +358,11 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             let guessResult = coloring !! fromIntegral x
             guard (guessResult == Green)
             pure x
-  coloringShownE <- delayE 0.3 coloringE
+  (coloringEasingE, coloringShownE) <- delayE 0.3 coloringE
 
   let nonWordAnimationBeganE
         = nonWordE
-  nonWordAnimationCompleteE <- delayE 1 nonWordAnimationBeganE
+  (_, nonWordAnimationCompleteE) <- delayE 1 nonWordAnimationBeganE
 
   let moveToBottomE
         = givenEvent coloringAnimationCompleteE
@@ -364,13 +372,14 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = givenEvent nonWordAnimationCompleteE
         $ transformIt $ \(y, _)
        -> Map.singleton y DeleteRow
-  let rowActionsE
+  let nextRowActionsE
         = unionWith (error "rowActionsE: simultaneous occurrences")
             moveToBottomE
             deleteRowE
+  (_, rowActionsE) <- delayE 0 nextRowActionsE
   let rowAnimationBeganE
         = rowActionsE
-  rowAnimationCompleteE <- delayE 1 (() <$ rowAnimationBeganE)
+  (_, rowAnimationCompleteE) <- delayE 1 (() <$ rowAnimationBeganE)
   let winAnimationCompleteE
         = whenE ( (&&)
               <$> ((== Win) <$> worldStatusB)
@@ -483,13 +492,14 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             for_ (zip [0..] guess) $ \(x, letter) -> do
               ix (V2 x y) . #blockLabel .= Letter letter
   let boardWithColoredBlocksE
-        = givenEvent coloringE
+        = givenEvent coloringEasingE
         $ withBehaviour boardB
-        $ transformIt $ \((x, y, analyzedGuess), board)
+        $ transformIt $ \((t, (x, y, analyzedGuess)), board)
        -> flip execState board $ do
             let coloring = guessColoring analyzedGuess
             let guessResult = coloring !! fromIntegral x
             ix (V2 x y) . #blockStatus .= guessStatus guessResult
+            ix (V2 x y) . #blockOffset . _y .= - (1 - (2*t-1)**2)
   let boardWithReorderedRowsE
         = givenEvent rowActionsE
         $ withBehaviour boardB

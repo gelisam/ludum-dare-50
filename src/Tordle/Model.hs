@@ -85,6 +85,8 @@ data Block = Block
       :: Label
   , blockStatus
       :: BlockStatus
+  , blockOffset
+      :: V2 Double
   }
   deriving (Eq, Generic, Ord, Show)
 
@@ -180,7 +182,7 @@ renderPiece
   -> Board
 renderPiece (Piece {..})
   = Map.fromList
-      [ (piecePos + pos, Block label Falling)
+      [ (piecePos + pos, Block label Falling 0)
       | (pos, label) <- Map.toList $ unFixedTetromino $ runOneSidedTetromino pieceBlocks
       ]
 

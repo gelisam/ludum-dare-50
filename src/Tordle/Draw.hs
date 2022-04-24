@@ -62,7 +62,7 @@ drawMaybeSolution renderer assets maybeSolution center = do
           = center - half ((V2 w 2 - 1) * bLOCK_STRIDE)
     drawMaybeHelpText renderer assets (Just HelpSolution) (V2 (center^._x) (topLeft^._y))
     for_ (zip [0..] solution) $ \(i, letter) -> do
-      let block = Block (Letter letter) CorrectSpot
+      let block = Block (Letter letter) CorrectSpot 0
       drawBlock renderer assets (Just block) (topLeft + V2 i 1 * bLOCK_STRIDE)
 
 drawMaybeHelpText
@@ -133,22 +133,23 @@ drawBlock renderer (Assets {assetsBlackLetterTextures, assetsWhiteLetterTextures
     Nothing -> do
       drawOutlineBlock renderer pos lightGray
     Just (Block {..}) -> do
+      let pos' = pos + fmap round (bLOCK_STRIDE * blockOffset)
       case blockStatus of
         Falling -> do
-          drawSolidBlock renderer pos blue
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
+          drawSolidBlock renderer pos' blue
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
         InIncompleteWord -> do
-          drawOutlineBlock renderer pos gray
-          drawLabel renderer assetsBlackLetterTextures blockLabel pos
+          drawOutlineBlock renderer pos' gray
+          drawLabel renderer assetsBlackLetterTextures blockLabel pos'
         NotInWord -> do
-          drawSolidBlock renderer pos gray
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
+          drawSolidBlock renderer pos' gray
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
         WrongSpot -> do
-          drawSolidBlock renderer pos yellow
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
+          drawSolidBlock renderer pos' yellow
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
         CorrectSpot -> do
-          drawSolidBlock renderer pos green
-          drawLabel renderer assetsWhiteLetterTextures blockLabel pos
+          drawSolidBlock renderer pos' green
+          drawLabel renderer assetsWhiteLetterTextures blockLabel pos'
 
 drawBoard
   :: Renderer
@@ -197,7 +198,7 @@ drawAlphabetColoring renderer assets alphabedColoring center = do
           = center - half ((V2 w 3 - 1) * bLOCK_STRIDE)
     for_ (zip [0..] row) $ \(i, letter) -> do
       let maybeGuessResult = Map.lookup letter alphabedColoring
-      let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult)
+      let block = Block (Letter letter) (maybeGuessStatus maybeGuessResult) 0
       drawBlock renderer assets (Just block) (topLeft + V2 i j * bLOCK_STRIDE)
 
 presentWorld
