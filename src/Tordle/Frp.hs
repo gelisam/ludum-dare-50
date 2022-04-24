@@ -328,6 +328,20 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         = unionWith (error "coloringE: simultaneous occurrences")
             initialColoringE
             laterColoringE
+  let greyLetterE
+        = givenEvent coloringE
+        $ maybeKeepIt $ \(x, _, analyzedGuess) -> do
+            let coloring = guessColoring analyzedGuess
+            let guessResult = coloring !! fromIntegral x
+            guard (guessResult == Grey)
+            pure x
+  let yellowLetterE
+        = givenEvent coloringE
+        $ maybeKeepIt $ \(x, _, analyzedGuess) -> do
+            let coloring = guessColoring analyzedGuess
+            let guessResult = coloring !! fromIntegral x
+            guard (guessResult == Yellow)
+            pure x
   let greenLetterE
         = givenEvent coloringE
         $ maybeKeepIt $ \(x, _, analyzedGuess) -> do
@@ -548,6 +562,12 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
                     )
   lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundLand)
                    <$ landE
+                    )
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundGreyLetter)
+                   <$ greyLetterE
+                    )
+  lift $ reactimate ( Mixer.play (assets ^?! #assetsSoundEffects . ix SoundYellowLetter)
+                   <$ yellowLetterE
                     )
   lift $ reactimate ( (\x -> Mixer.play (assets ^?! #assetsSoundEffects . ix (SoundGreenLetter x)))
                   <$> greenLetterE
