@@ -386,12 +386,13 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
         $ transformIt $ \(y, rowAction)
        -> Map.singleton y rowAction
   (_, rowAnimationCompleteE) <- delayE 0 rowAnimationAlmostCompleteE
-  let winAnimationCompleteE
+  let nextWinAnimationCompleteE
         = whenE ( (&&)
               <$> ((== Win) <$> worldStatusB)
               <*> (null <$> remainingAnalyzedRowsB)
                 )
         $ (() <$ rowAnimationCompleteE)
+  (_, winAnimationCompleteE) <- delayE 0 nextWinAnimationCompleteE
 
   alphabetColoringB <- changingB Map.empty
     [ onEvent resetE $ setValue $ \() -> Map.empty
