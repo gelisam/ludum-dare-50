@@ -319,7 +319,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             guard (rowColoring analyzedRow == Nothing)
             pure (y, completion)
 
-  (_, coloringAnimationBeganE) <- delayE 0.5 guessE
+  (_, coloringAnimationBeganE) <- delayE 0.3 guessE
   let initialColoringE
         = givenEvent coloringAnimationBeganE
         $ transformIt $ \(y, analyzedRow)
@@ -378,7 +378,7 @@ frpNetwork window renderer assets sdlE timeE quit = mdo
             moveToBottomE
             deleteRowE
   (_, rowAnimationBeganE) <- delayE 0 nextRowActionE
-  (rowActionEasingE, rowAnimationAlmostCompleteE) <- delayE 1 rowAnimationBeganE
+  (rowActionEasingE, rowAnimationAlmostCompleteE) <- delayE 0.4 rowAnimationBeganE
   let rowActionE
         = rowAnimationAlmostCompleteE
   let rowActionsE
