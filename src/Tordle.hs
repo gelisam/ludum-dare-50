@@ -8,10 +8,10 @@ import Data.IORef
 import Foreign.C.Types (CInt)
 import Linear (V2(..))
 import qualified Reactive.Banana.Frameworks as Banana
-import qualified SDL
-import qualified SDL.Mixer as Mixer
-import qualified SDL.Video as Video
-import qualified SDL.Video.Renderer as Renderer
+import qualified SDL.Stub as SDL
+import qualified SDL.Mixer.Stub as Mixer
+import qualified SDL.Video.Stub as Video
+import qualified SDL.Video.Renderer.Stub as Renderer
 import SDL.Extra
 import System.Random
 import Tordle.Assets

@@ -27,6 +27,13 @@ library
                     , Linear.Extra
                     , Reactive.Banana.Extra
                     , SDL.Extra
+                    , SDL.Font.Stub
+                    , SDL.Stub
+                    , SDL.Mixer.Stub
+                    , SDL.Primitive.Stub
+                    , SDL.Video.Stub
+                    , SDL.Video.Stub.Types
+                    , SDL.Video.Renderer.Stub
 
     build-depends:    base
                     , StateVar
@@ -38,10 +45,6 @@ library
                     , mtl
                     , random
                     , reactive-banana >= 1.3.0.0
-                    , sdl2
-                    , sdl2-gfx
-                    , sdl2-ttf
-                    , sdl2-mixer
                     , text
                     , these
                     , transformers
