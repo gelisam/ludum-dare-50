@@ -1,13 +1,13 @@
-{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 {-# OPTIONS -Wno-incomplete-uni-patterns #-}
 module Tordle.Assets where
 
 import Data.Function.Extra (With(..), withMultiple)
 import Data.Map (Map)
-import Data.Map qualified as Map
+import qualified Data.Map as Map
 import Data.Set (Set)
-import Data.Set qualified as Set
-import Data.Text qualified as Text
+import qualified Data.Set as Set
+import qualified Data.Text as Text
 import GHC.Generics (Generic)
 import SDL (V4(..))
 import SDL.Video.Renderer (Renderer, Texture)

@@ -1,11 +1,11 @@
-{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, LambdaCase, OverloadedLabels, RankNTypes #-}
+{-# LANGUAGE DeriveGeneric, FlexibleContexts, LambdaCase, OverloadedLabels, RankNTypes #-}
 {-# OPTIONS -Wno-name-shadowing #-}
 module Reactive.Banana.Extra where
 
 import Control.Lens
 import Control.Monad.State
 import Data.Generics.Labels ()
-import Data.Monoid qualified as Monoid
+import qualified Data.Monoid as Monoid
 import Data.Semigroup (First(..))
 import Data.These
 import GHC.Generics (Generic)

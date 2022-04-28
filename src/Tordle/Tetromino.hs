@@ -1,13 +1,13 @@
-{-# LANGUAGE DeriveFoldable, DeriveGeneric, DeriveTraversable, ImportQualifiedPost #-}
+{-# LANGUAGE DeriveFoldable, DeriveGeneric, DeriveTraversable #-}
 module Tordle.Tetromino where
 
 import Control.Lens hiding (mapping)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Writer
 import Data.Foldable
-import Data.Maybe qualified as Unsafe (fromJust)
+import qualified Data.Maybe as Unsafe (fromJust)
 import Data.Map (Map)
-import Data.Map qualified as Map
+import qualified Data.Map as Map
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.Extra

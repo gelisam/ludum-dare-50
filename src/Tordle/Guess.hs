@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns, OverloadedLabels #-}
+{-# LANGUAGE DeriveGeneric, FlexibleContexts, LambdaCase, NamedFieldPuns, OverloadedLabels #-}
 module Tordle.Guess where
 
 import Control.Lens
@@ -6,8 +6,8 @@ import Control.Monad.State
 import Data.Generics.Labels ()
 import Data.List (delete, nub)
 import Data.Map (Map)
-import Data.Map qualified as Map
-import Data.Set qualified as Set
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.V2 (V2(..))

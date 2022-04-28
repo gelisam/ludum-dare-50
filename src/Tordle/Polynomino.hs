@@ -1,12 +1,11 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 -- | Just for kicks, let's generate the tetrominoes from first principles instead of hardcoding them
 module Tordle.Polynomino where
 
 import Control.Lens
 import Data.Foldable
-import Data.Maybe qualified as Unsafe (fromJust)
+import qualified Data.Maybe as Unsafe (fromJust)
 import Data.Set (Set)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..), _x, _y)
 import Tordle.Dir

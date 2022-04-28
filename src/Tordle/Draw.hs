@@ -1,4 +1,4 @@
-{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns, OverloadedLabels, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE NamedFieldPuns, OverloadedLabels, RecordWildCards, ScopedTypeVariables #-}
 module Tordle.Draw where
 
 import Control.Lens
@@ -6,18 +6,18 @@ import Control.Monad (when)
 import Data.Foldable (for_)
 import Data.Generics.Labels ()
 import Data.Map ((!), Map)
-import Data.Map qualified as Map
+import qualified Data.Map as Map
 import Data.StateVar (($=), get)
 import Foreign.C.Types (CInt)
 import Linear.Extra
 import Linear.V2 (V2(..), _x, _y)
 import Linear.V4 (V4(..))
 import SDL.Primitive (Color, Pos)
-import SDL.Primitive qualified as Primitive
+import qualified SDL.Primitive as Primitive
 import SDL.Video (Window)
-import SDL.Video qualified as Video
+import qualified SDL.Video as Video
 import SDL.Video.Renderer (Renderer, Texture)
-import SDL.Video.Renderer qualified as Renderer
+import qualified SDL.Video.Renderer as Renderer
 import SDL.Extra
 import Tordle.Assets
 import Tordle.Colors

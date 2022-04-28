@@ -1,4 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 module SDL.Extra where
 
 import Control.Exception (bracket, bracket_)
@@ -7,14 +6,14 @@ import Foreign.C.Types (CInt)
 import Linear.Extra
 import SDL (Point(P), V2(..))
 import SDL.Font (Font)
-import SDL.Font qualified as Font
+import qualified SDL.Font as Font
 import SDL.Mixer (Music)
-import SDL.Mixer qualified as Mixer
+import qualified SDL.Mixer as Mixer
 import SDL.Primitive (Color, Pos)
 import SDL.Video (Rectangle(..), Surface, Texture, Window, WindowConfig)
-import SDL.Video qualified as Video
+import qualified SDL.Video as Video
 import SDL.Video.Renderer (Renderer, RendererConfig)
-import SDL.Video.Renderer qualified as Renderer
+import qualified SDL.Video.Renderer as Renderer
 
 
 withLoadable

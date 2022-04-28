@@ -1,8 +1,8 @@
-{-# LANGUAGE ImportQualifiedPost, NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Tordle.Share where
 
 import Control.Lens
-import Data.Map qualified as Map
+import qualified Data.Map as Map
 import Data.Foldable
 import Data.Traversable
 import Linear.V2 (V2(..), _y)

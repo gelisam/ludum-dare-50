@@ -1,4 +1,4 @@
-{-# LANGUAGE ImportQualifiedPost, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Tordle (main) where
 
 import Control.Monad (unless)
@@ -7,11 +7,11 @@ import Data.Function (fix)
 import Data.IORef
 import Foreign.C.Types (CInt)
 import Linear (V2(..))
-import Reactive.Banana.Frameworks qualified as Banana
-import SDL qualified
-import SDL.Mixer qualified as Mixer
-import SDL.Video qualified as Video
-import SDL.Video.Renderer qualified as Renderer
+import qualified Reactive.Banana.Frameworks as Banana
+import qualified SDL
+import qualified SDL.Mixer as Mixer
+import qualified SDL.Video as Video
+import qualified SDL.Video.Renderer as Renderer
 import SDL.Extra
 import System.Random
 import Tordle.Assets

@@ -1,11 +1,11 @@
-{-# LANGUAGE FlexibleContexts, ImportQualifiedPost, LambdaCase, NamedFieldPuns #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, NamedFieldPuns #-}
 module Tordle.Rng where
 
 import Control.Monad.State
 import Control.Monad.Writer
 import Data.Foldable
 import Data.Set (Set)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 import Data.Traversable
 import System.Random.Stateful (StateGenM(..), StdGen, uniformRM)
 import Tordle.Assets

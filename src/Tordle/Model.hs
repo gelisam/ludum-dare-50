@@ -1,10 +1,10 @@
-{-# LANGUAGE DeriveGeneric, ImportQualifiedPost, OverloadedLabels, RankNTypes, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric, OverloadedLabels, RankNTypes, RecordWildCards #-}
 module Tordle.Model where
 
 import Control.Lens
 import Data.Generics.Labels ()
 import Data.Map (Map)
-import Data.Map qualified as Map
+import qualified Data.Map as Map
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.V2 (V2(..), _x, _y)

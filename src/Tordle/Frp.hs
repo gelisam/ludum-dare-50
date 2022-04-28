@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, ImportQualifiedPost, LambdaCase, RecursiveDo #-}
+{-# LANGUAGE DataKinds, OverloadedLabels, TypeApplications, LambdaCase, RecursiveDo #-}
 {-# OPTIONS -Wno-name-shadowing #-}
 module Tordle.Frp where
 
@@ -6,20 +6,20 @@ import Control.Lens
 import Control.Monad (guard, when)
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
-import Data.Char qualified as Char
+import qualified Data.Char as Char
 import Data.Foldable
 import Data.Function.Extra
 import Data.Generics.Labels ()
-import Data.Map qualified as Map
-import Data.Set qualified as Set
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Data.Traversable
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..), _x, _y)
 import Reactive.Banana.Combinators
 import Reactive.Banana.Extra
 import Reactive.Banana.Frameworks
-import SDL qualified
-import SDL.Mixer qualified as Mixer
+import qualified SDL
+import qualified SDL.Mixer as Mixer
 import SDL.Video (Window)
 import SDL.Video.Renderer (Renderer)
 import System.Random.Stateful (StdGen)
