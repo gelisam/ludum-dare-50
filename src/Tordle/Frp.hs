@@ -22,7 +22,7 @@ import qualified SDL.Stub as SDL
 import qualified SDL.Mixer.Stub as Mixer
 import SDL.Video.Stub (Window)
 import SDL.Video.Renderer.Stub (Renderer)
-import System.Random.Stateful (StdGen)
+import System.Random.Stateful.Stub (StdGen)
 import Tordle.Assets
 import Tordle.Dir
 import Tordle.Draw

@@ -11,7 +11,7 @@ import qualified Data.Set as Set
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.V2 (V2(..))
-import System.Random.Stateful (StdGen)
+import System.Random.Stateful.Stub (StdGen)
 import Tordle.Assets
 import Tordle.Model
 import Tordle.Rng

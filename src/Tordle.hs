@@ -2,6 +2,7 @@
 module Tordle (main) where
 
 import Control.Monad (unless)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State
 import Data.Function (fix)
 import Data.IORef
@@ -45,7 +46,7 @@ main = do
             eventNetwork <- Banana.compile $ do
               sdlE <- Banana.fromAddHandler sdlPayloadAddHandler
               timeE <- Banana.fromAddHandler timeAddHandler
-              rng <- initStdGen
+              rng <- liftIO $ newStdGen
               flip evalStateT rng $ do
                 frpNetwork window renderer assets sdlE timeE quit
             Banana.actuate eventNetwork
