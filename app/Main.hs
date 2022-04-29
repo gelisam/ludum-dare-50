@@ -1,3 +1,9 @@
-module Main (main) where
+module Main where
 
-import Tordle
+import qualified Tordle
+
+
+main
+  :: IO ()
+main = do
+  Tordle.main
