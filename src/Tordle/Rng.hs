@@ -7,7 +7,7 @@ import Data.Foldable
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Traversable
-import System.Random.Stateful.Stub (StateGenM(..), StdGen, uniformRM)
+import System.Random.Stateful (StateGenM(..), StdGen, uniformRM)
 import Tordle.Assets
 import Tordle.Model
 

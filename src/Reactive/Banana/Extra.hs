@@ -10,7 +10,7 @@ import Data.Semigroup (First(..))
 import Data.These
 import GHC.Generics (Generic)
 import Reactive.Banana.Combinators hiding (First)
-import System.Random.Stateful.Stub
+import System.Random.Stateful
 
 
 filterPrismE
