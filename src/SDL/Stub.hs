@@ -98,4 +98,4 @@ waitEventTimeout
   -> IO (Maybe Event)
 waitEventTimeout _ = do
   putStrLn "SDL.waitEventTimeout: stub"
-  pure Nothing
+  pure $ Just $ Event QuitEvent
