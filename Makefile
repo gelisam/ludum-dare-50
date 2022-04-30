@@ -17,21 +17,25 @@ instructions:
 	@echo "  http://0.0.0.0:8000/tordle-exe.html"
 
 serve:
-	python3 -m http.server
+	cd dist-js && python3 -m http.server
 
 HS_FILES = $(shell find src -type f -name '*.hs')
 
 ~/.ahc-cabal:
 	ahc-cabal update
 
-build: ~/.ahc-cabal $(HS_FILES) app/Main.hs tordle.cabal
-	ahc-cabal new-install --overwrite-policy=always --installdir . tordle-exe
-	ahc-dist --input-exe tordle-exe --browser --bundle
+dist-js/tordle-exe: ~/.ahc-cabal $(HS_FILES) app/Main.hs tordle.cabal
+	ahc-cabal new-install --overwrite-policy=always --installdir dist-js tordle-exe
+
+dist-js/tordle-exe.html: dist-js/tordle-exe
+	ahc-dist --input-exe dist-js/tordle-exe --browser --bundle
+
+build: dist-js/tordle-exe.html
 
 clean:
 	rm -rf dist-newstyle
-	rm -rf tordle-exe
-	rm -rf *.mjs
+	rm -rf dist-js/tordle-exe
+	rm -rf dist-js/*.mjs
 
 clobber: clean
-	rm -rf tordle-exe.*
+	rm -rf dist-js
