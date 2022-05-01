@@ -31,7 +31,7 @@ frpNetwork
   -> Event Double  -- ^ time
   -> IO ()  -- ^ quit
   -> StateT StdGen MomentIO ()
-frpNetwork window renderer assets sdlE timeE _quit = mdo
+frpNetwork window renderer assets sdlE timeE quit = mdo
   let keyboardE = filterPrismE #_KeyboardEvent sdlE
   let keyPressE = filterPrismE ( filtered (\e -> SDL.keyboardEventKeyMotion e == SDL.Pressed)
                                . #keyboardEventKeysym
@@ -43,6 +43,7 @@ frpNetwork window renderer assets sdlE timeE _quit = mdo
   let keyLeftE  = () <$ filterE (hasKeycode SDL.KeycodeLeft) keyPressE
   let keyDownE  = () <$ filterE (hasKeycode SDL.KeycodeDown) keyPressE
   let keyRightE = () <$ filterE (hasKeycode SDL.KeycodeRight) keyPressE
+  let keyEscE   = () <$ filterE (hasKeycode SDL.KeycodeEscape) keyPressE
 
   let tryMoveLeftE
         = keyLeftE
@@ -95,3 +96,5 @@ frpNetwork window renderer assets sdlE timeE _quit = mdo
         <*> pure Map.empty
         <*> currentPieceB
   lift $ reactimate (presentWorld window renderer assets <$> worldB <@ timeE)
+
+  lift $ reactimate (quit <$ keyEscE)
