@@ -25,6 +25,7 @@ library
                     , Tordle.Tetromino
                     , Data.Function.Extra
                     , Linear.Extra
+                    , Loop.Shim
                     , Reactive.Banana.Extra
                     , SDL.Extra
                     , SDL.Font.Shim

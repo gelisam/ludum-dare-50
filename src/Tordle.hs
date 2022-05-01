@@ -7,6 +7,7 @@ import Data.Function (fix)
 import Data.IORef
 import Foreign.C.Types (CInt)
 import Linear (V2(..))
+import Loop.Shim (scheduleNextFrame)
 import qualified Reactive.Banana.Frameworks as Banana
 import qualified SDL.Shim as SDL
 import qualified SDL.Mixer.Shim as Mixer
@@ -70,7 +71,7 @@ main = do
                     continue = do
                       time <- SDL.time
                       fireTime (time - time0)
-                      loop
+                      scheduleNextFrame loop
                 case SDL.eventPayload <$> maybeSdlEvent of
                   Just SDL.QuitEvent -> do
                     stop
