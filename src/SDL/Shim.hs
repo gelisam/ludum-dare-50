@@ -1,14 +1,16 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric, LambdaCase #-}
 module SDL.Shim
   ( V2(..)
   , V4(..)
   , module SDL.Shim
   ) where
 
+import Data.IORef
 import Foreign.C.Types (CInt)
 import GHC.Generics (Generic)
 import Linear.V2
 import Linear.V4
+import System.IO.Unsafe (unsafePerformIO)
 
 
 data Event = Event
@@ -93,9 +95,27 @@ unwrapKeycode KeycodeTab
 unwrapKeycode KeycodeUp
   = 1073741906
 
+globalEventList
+  :: IORef [Event]
+globalEventList
+  = unsafePerformIO
+  $ newIORef
+      [ mkEvent KeycodeRight
+      , mkEvent KeycodeDown
+      , mkEvent KeycodeEscape
+      ]
+  where
+    mkEvent :: Keycode -> Event
+    mkEvent key
+      = Event $ KeyboardEvent $ KeyboardEventData Pressed $ Keysym key (KeyModifier False False)
+
 waitEventTimeout
   :: CInt
   -> IO (Maybe Event)
 waitEventTimeout _ = do
-  putStrLn "SDL.waitEventTimeout: stub"
-  pure $ Just $ Event QuitEvent
+  maybeEvent <- atomicModifyIORef globalEventList $ \case
+    []
+      -> ([], Nothing)
+    x:xs
+      -> (xs, Just x)
+  pure maybeEvent
