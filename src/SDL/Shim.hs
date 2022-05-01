@@ -1,8 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
-module SDL.Stub
+module SDL.Shim
   ( V2(..)
   , V4(..)
-  , module SDL.Stub
+  , module SDL.Shim
   ) where
 
 import Foreign.C.Types (CInt)

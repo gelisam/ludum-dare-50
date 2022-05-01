@@ -1,4 +1,4 @@
-module SDL.Mixer.Stub where
+module SDL.Mixer.Shim where
 
 
 data Audio

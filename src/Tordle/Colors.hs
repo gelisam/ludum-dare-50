@@ -1,7 +1,7 @@
 module Tordle.Colors where
 
-import SDL.Stub (V4(..))
-import SDL.Primitive.Stub (Color)
+import SDL.Shim (V4(..))
+import SDL.Primitive.Shim (Color)
 
 
 green

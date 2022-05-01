@@ -1,10 +1,10 @@
-module SDL.Primitive.Stub where
+module SDL.Primitive.Shim where
 
 import Data.Word (Word8)
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
 import Linear.V4 (V4(..))
-import SDL.Video.Stub.Types
+import SDL.Video.Shim.Types
 
 
 type Color = V4 Word8

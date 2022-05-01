@@ -12,12 +12,12 @@ import Foreign.C.Types (CInt)
 import Linear.Extra
 import Linear.V2 (V2(..), _x, _y)
 import Linear.V4 (V4(..))
-import SDL.Primitive.Stub (Color, Pos)
-import qualified SDL.Primitive.Stub as Primitive
-import SDL.Video.Stub (Window)
-import qualified SDL.Video.Stub as Video
-import SDL.Video.Renderer.Stub (Renderer, Texture)
-import qualified SDL.Video.Renderer.Stub as Renderer
+import SDL.Primitive.Shim (Color, Pos)
+import qualified SDL.Primitive.Shim as Primitive
+import SDL.Video.Shim (Window)
+import qualified SDL.Video.Shim as Video
+import SDL.Video.Renderer.Shim (Renderer, Texture)
+import qualified SDL.Video.Renderer.Shim as Renderer
 import SDL.Extra
 import Tordle.Assets
 import Tordle.Colors

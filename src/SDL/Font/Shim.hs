@@ -1,8 +1,8 @@
-module SDL.Font.Stub where
+module SDL.Font.Shim where
 
 import Data.Text
-import SDL.Primitive.Stub (Color)
-import SDL.Video.Stub.Types
+import SDL.Primitive.Shim (Color)
+import SDL.Video.Shim.Types
 
 
 data Font

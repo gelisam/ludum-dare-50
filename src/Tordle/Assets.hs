@@ -9,8 +9,8 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import GHC.Generics (Generic)
-import SDL.Stub (V4(..))
-import SDL.Video.Renderer.Stub (Renderer, Texture)
+import SDL.Shim (V4(..))
+import SDL.Video.Renderer.Shim (Renderer, Texture)
 import SDL.Extra
 import Tordle.Model
 

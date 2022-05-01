@@ -1,8 +1,8 @@
-module SDL.Video.Stub.Types where
+module SDL.Video.Shim.Types where
 
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
-import SDL.Stub (Point)
+import SDL.Shim (Point)
 
 
 data Rectangle a

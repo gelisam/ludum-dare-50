@@ -18,10 +18,10 @@ import Linear.V2 (V2(..), _x, _y)
 import Reactive.Banana.Combinators
 import Reactive.Banana.Extra
 import Reactive.Banana.Frameworks
-import qualified SDL.Stub as SDL
-import qualified SDL.Mixer.Stub as Mixer
-import SDL.Video.Stub (Window)
-import SDL.Video.Renderer.Stub (Renderer)
+import qualified SDL.Shim as SDL
+import qualified SDL.Mixer.Shim as Mixer
+import SDL.Video.Shim (Window)
+import SDL.Video.Renderer.Shim (Renderer)
 import System.Random.Stateful (StdGen)
 import Tordle.Assets
 import Tordle.Dir

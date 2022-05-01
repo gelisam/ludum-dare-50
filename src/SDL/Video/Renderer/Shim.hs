@@ -1,15 +1,15 @@
-module SDL.Video.Renderer.Stub
+module SDL.Video.Renderer.Shim
   ( Renderer
   , RendererConfig(..)
   , Texture
   , TextureInfo(..)
-  , module SDL.Video.Renderer.Stub
+  , module SDL.Video.Renderer.Shim
   ) where
 
 import Data.StateVar
 import Foreign.C.Types (CInt)
-import SDL.Primitive.Stub
-import SDL.Video.Stub.Types
+import SDL.Primitive.Shim
+import SDL.Video.Shim.Types
 
 
 clear

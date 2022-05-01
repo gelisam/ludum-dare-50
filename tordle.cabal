@@ -27,13 +27,13 @@ library
                     , Linear.Extra
                     , Reactive.Banana.Extra
                     , SDL.Extra
-                    , SDL.Font.Stub
-                    , SDL.Stub
-                    , SDL.Mixer.Stub
-                    , SDL.Primitive.Stub
-                    , SDL.Video.Stub
-                    , SDL.Video.Stub.Types
-                    , SDL.Video.Renderer.Stub
+                    , SDL.Font.Shim
+                    , SDL.Shim
+                    , SDL.Mixer.Shim
+                    , SDL.Primitive.Shim
+                    , SDL.Video.Shim
+                    , SDL.Video.Shim.Types
+                    , SDL.Video.Renderer.Shim
 
     build-depends:    base
                     , StateVar

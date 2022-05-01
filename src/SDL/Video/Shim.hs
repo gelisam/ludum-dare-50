@@ -1,17 +1,17 @@
-module SDL.Video.Stub
+module SDL.Video.Shim
   ( Rectangle(..)
   , Surface
   , Texture
   , Window
   , WindowConfig(..)
-  , module SDL.Video.Stub
+  , module SDL.Video.Shim
   ) where
 
 import Data.StateVar
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
-import SDL.Video.Stub.Types
+import SDL.Video.Shim.Types
 
 
 createWindow

@@ -4,16 +4,16 @@ import Control.Exception (bracket, bracket_)
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
 import Linear.Extra
-import SDL.Stub (Point(P), V2(..))
-import SDL.Font.Stub (Font)
-import qualified SDL.Font.Stub as Font
-import SDL.Mixer.Stub (Music)
-import qualified SDL.Mixer.Stub as Mixer
-import SDL.Primitive.Stub (Color, Pos)
-import SDL.Video.Stub (Rectangle(..), Surface, Texture, Window, WindowConfig)
-import qualified SDL.Video.Stub as Video
-import SDL.Video.Renderer.Stub (Renderer, RendererConfig)
-import qualified SDL.Video.Renderer.Stub as Renderer
+import SDL.Shim (Point(P), V2(..))
+import SDL.Font.Shim (Font)
+import qualified SDL.Font.Shim as Font
+import SDL.Mixer.Shim (Music)
+import qualified SDL.Mixer.Shim as Mixer
+import SDL.Primitive.Shim (Color, Pos)
+import SDL.Video.Shim (Rectangle(..), Surface, Texture, Window, WindowConfig)
+import qualified SDL.Video.Shim as Video
+import SDL.Video.Renderer.Shim (Renderer, RendererConfig)
+import qualified SDL.Video.Renderer.Shim as Renderer
 
 
 withLoadable
