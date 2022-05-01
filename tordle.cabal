@@ -35,6 +35,7 @@ library
                     , SDL.Video.Shim
                     , SDL.Video.Shim.Types
                     , SDL.Video.Renderer.Shim
+                    , System.Random.Shim
 
     build-depends:    base
                     , StateVar

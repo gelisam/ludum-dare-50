@@ -2,6 +2,7 @@
 module Tordle (main) where
 
 import Control.Monad (unless)
+import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.State
 import Data.Function (fix)
 import Data.IORef
@@ -14,7 +15,7 @@ import qualified SDL.Mixer.Shim as Mixer
 import qualified SDL.Video.Shim as Video
 import qualified SDL.Video.Renderer.Shim as Renderer
 import SDL.Extra
-import System.Random
+import System.Random.Shim
 import Tordle.Assets
 import Tordle.Frp
 
@@ -46,7 +47,7 @@ main = do
             eventNetwork <- Banana.compile $ do
               sdlE <- Banana.fromAddHandler sdlPayloadAddHandler
               timeE <- Banana.fromAddHandler timeAddHandler
-              rng <- initStdGen
+              rng <- liftIO initStdGen
               flip evalStateT rng $ do
                 frpNetwork window renderer assets sdlE timeE quit
             Banana.actuate eventNetwork
