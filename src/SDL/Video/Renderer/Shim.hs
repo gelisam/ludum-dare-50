@@ -1,10 +1,21 @@
+{-# LANGUAGE CPP #-}
 module SDL.Video.Renderer.Shim
   ( Renderer
   , RendererConfig(..)
   , Texture
   , TextureInfo(..)
-  , module SDL.Video.Renderer.Shim
+  , clear
+  , copy
+  , createTextureFromSurface
+  , destroyTexture
+  , freeSurface
+  , defaultRenderer
+  , present
+  , queryTexture
+  , rendererDrawColor
   ) where
+
+#ifdef ASTERIUS
 
 import Data.StateVar
 import Foreign.C.Types (CInt)
@@ -81,3 +92,8 @@ rendererDrawColor _ = StateVar getter setter
       -> IO ()
     setter _ = do
       putStrLn "Renderer.windowSize / set: stub"
+
+
+#else
+import SDL.Video.Renderer
+#endif

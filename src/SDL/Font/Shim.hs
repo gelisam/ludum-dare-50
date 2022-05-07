@@ -1,4 +1,15 @@
-module SDL.Font.Shim where
+{-# LANGUAGE CPP #-}
+module SDL.Font.Shim
+  ( Font
+  , PointSize
+  , blended
+  , free
+  , initialize
+  , load
+  , quit
+  ) where
+
+#ifdef ASTERIUS
 
 import Data.Text
 import SDL.Primitive.Shim (Color)
@@ -10,6 +21,7 @@ data Font
   deriving Show
 
 type PointSize = Int
+
 
 blended
   :: Font
@@ -43,3 +55,8 @@ quit
   :: IO ()
 quit = do
   putStrLn "Font.quit: stub"
+
+
+#else
+import SDL.Font
+#endif

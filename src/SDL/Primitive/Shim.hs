@@ -1,4 +1,12 @@
-module SDL.Primitive.Shim where
+{-# LANGUAGE CPP #-}
+module SDL.Primitive.Shim
+  ( Color
+  , Pos
+  , fillRectangle
+  , rectangle
+  ) where
+
+#ifdef ASTERIUS
 
 import Data.Word (Word8)
 import Foreign.C.Types (CInt)
@@ -27,3 +35,8 @@ rectangle
   -> IO ()
 rectangle _ _ _ _ = do
   putStrLn "Primitive.rectangle: stub"
+
+
+#else
+import SDL.Primitive
+#endif

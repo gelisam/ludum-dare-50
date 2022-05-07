@@ -1,11 +1,19 @@
+{-# LANGUAGE CPP #-}
 module SDL.Video.Shim
   ( Rectangle(..)
   , Surface
   , Texture
   , Window
   , WindowConfig(..)
-  , module SDL.Video.Shim
+  , createWindow
+  , destroyWindow
+  , createRenderer
+  , defaultWindow
+  , destroyRenderer
+  , windowSize
   ) where
+
+#ifdef ASTERIUS
 
 import Data.StateVar
 import Data.Text (Text)
@@ -18,7 +26,7 @@ createWindow
   :: Text  -- title
   -> WindowConfig
   -> IO Window
-createWindow _ _ = do
+createWindow title windowConfig = do
   putStrLn "Video.createWindow: stub"
   pure WindowStub
 
@@ -64,3 +72,8 @@ windowSize _ = StateVar getter setter
       -> IO ()
     setter _ = do
       putStrLn "Video.windowSize / set: stub"
+
+
+#else
+import SDL.Video
+#endif

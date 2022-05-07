@@ -1,9 +1,27 @@
-{-# LANGUAGE DeriveGeneric, LambdaCase #-}
+{-# LANGUAGE CPP, DeriveGeneric, LambdaCase, PatternSynonyms #-}
 module SDL.Shim
   ( V2(..)
   , V4(..)
-  , module SDL.Shim
+  , Event(..)
+  , EventPayload(..)
+  , InputMotion(..)
+  , KeyModifier(..)
+  , KeyboardEventData(..)
+  , Keycode
+  , pattern KeycodeDown
+  , pattern KeycodeEscape
+  , pattern KeycodeRight
+  , pattern KeycodeLeft
+  , pattern KeycodeUp
+  , Keysym(..)
+  , Point(..)
+  , initializeAll
+  , time
+  , unwrapKeycode
+  , waitEventTimeout
   ) where
+
+#ifdef ASTERIUS
 
 import Data.IORef
 import Foreign.C.Types (CInt)
@@ -119,3 +137,8 @@ waitEventTimeout _ = do
     x:xs
       -> (xs, Just x)
   pure maybeEvent
+
+
+#else
+import SDL
+#endif

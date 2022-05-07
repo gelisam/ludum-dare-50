@@ -1,4 +1,19 @@
-module SDL.Mixer.Shim where
+{-# LANGUAGE CPP, PatternSynonyms #-}
+module SDL.Mixer.Shim
+  ( Audio(..)
+  , Channel
+  , pattern AllChannels
+  , Chunk(..)
+  , ChunkSize
+  , Loadable(..)
+  , Music(..)
+  , defaultAudio
+  , halt
+  , play
+  , withAudio
+  ) where
+
+#ifdef ASTERIUS
 
 
 data Audio
@@ -63,3 +78,8 @@ withAudio
   -> IO a 
 withAudio _ _ body = do
   body
+
+
+#else
+import SDL.Mixer
+#endif
