@@ -12,6 +12,7 @@ module SDL.Video.Asterius
   , windowSize
   ) where
 
+import Asterius.Types
 import Data.StateVar
 import Data.Text (Text)
 import Foreign.C.Types (CInt)
@@ -19,19 +20,38 @@ import Linear.V2 (V2(..))
 import SDL.Video.Asterius.Types
 
 
+foreign import javascript
+  "(() => {                                           \
+  \  const div = document.createElement('div');       \
+  \  div.style.width = '' + $1 + 'px';                \
+  \  div.style.height = '' + $2 + 'px';               \
+  \  div.style.margin = 'auto';                       \
+  \  const canvas = document.createElement('canvas'); \
+  \  canvas.id = 'canvas';                            \
+  \  canvas.width = $1;                               \
+  \  canvas.height = $2;                              \
+  \  div.appendChild(canvas);                         \
+  \  document.body.appendChild(div);                  \
+  \  return canvas;                                   \
+  \})()"
+  js_createCanvas :: Int -> Int -> IO JSVal
+
+
 createWindow
   :: Text  -- title
   -> WindowConfig
   -> IO Window
 createWindow title windowConfig = do
-  putStrLn "Video.createWindow: stub"
-  pure WindowStub
+  let V2 w h = windowInitialSize windowConfig
+  Window <$> js_createCanvas (fromIntegral w) (fromIntegral h)
 
 destroyWindow
   :: Window
   -> IO ()
 destroyWindow _ = do
-  putStrLn "Video.destroyWindow: stub"
+  -- intentionally not removing the canvas because the top-level 'bracket' ends
+  -- too soon.
+  pure ()
 
 createRenderer
   :: Window

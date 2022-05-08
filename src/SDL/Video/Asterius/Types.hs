@@ -9,6 +9,7 @@ module SDL.Video.Asterius.Types
   , WindowConfig(..)
   ) where
 
+import Asterius.Types (JSVal)
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
 import SDL.Asterius (Point)
@@ -41,9 +42,10 @@ data TextureInfo = TextureInfo
   }
   deriving Show
 
-data Window
-  = WindowStub
-  deriving Show
+newtype Window = Window
+  { windowCanvas
+      :: JSVal
+  }
 
 data WindowConfig = WindowConfig
   { windowInitialSize
