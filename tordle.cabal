@@ -30,6 +30,7 @@ library
                     , Tordle.Tetromino
                     , Data.Function.Extra
                     , Linear.Extra
+                    , Loop
                     , Loop.Shim
                     , Reactive.Banana.Extra
                     , SDL.Extra
@@ -38,9 +39,18 @@ library
                     , SDL.Mixer.Shim
                     , SDL.Primitive.Shim
                     , SDL.Video.Shim
-                    , SDL.Video.Shim.Types
                     , SDL.Video.Renderer.Shim
                     , System.Random.Shim
+    if flag(asterius)
+      exposed-modules:  Loop.Asterius
+                      , SDL.Font.Asterius
+                      , SDL.Asterius
+                      , SDL.Mixer.Asterius
+                      , SDL.Primitive.Asterius
+                      , SDL.Video.Asterius
+                      , SDL.Video.Asterius.Types
+                      , SDL.Video.Renderer.Asterius
+                      , System.Random.Asterius
 
     build-depends:    base
                     , StateVar

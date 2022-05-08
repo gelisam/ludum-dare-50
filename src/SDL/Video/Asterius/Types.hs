@@ -1,32 +1,17 @@
-{-# LANGUAGE CPP #-}
-module SDL.Video.Shim.Types
+module SDL.Video.Asterius.Types
   ( Rectangle(..)
-#ifdef ASTERIUS
   , Renderer(..)
-#else
-  , Renderer
-#endif
   , RendererConfig(..)
   , Surface(..)
-#ifdef ASTERIUS
   , Texture(..)
-#else
-  , Texture
-#endif
   , TextureInfo(..)
-#ifdef ASTERIUS
   , Window(..)
-#else
-  , Window
-#endif
   , WindowConfig(..)
   ) where
 
-#ifdef ASTERIUS
-
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
-import SDL.Shim (Point)
+import SDL.Asterius (Point)
 
 
 data Rectangle a
@@ -65,8 +50,3 @@ data WindowConfig = WindowConfig
       :: V2 CInt
   }
   deriving Show
-
-
-#else
-import SDL.Video
-#endif
