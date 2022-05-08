@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module SDL.Video.Asterius
   ( Rectangle(..)
   , Surface
@@ -51,7 +52,13 @@ createWindow
 createWindow title windowConfig = do
   js_setTitle $ toJSString $ Text.unpack title
   let V2 w h = windowInitialSize windowConfig
-  Window <$> js_createCanvas (fromIntegral w) (fromIntegral h)
+  canvas <- js_createCanvas (fromIntegral w) (fromIntegral h)
+  pure $ Window
+    { windowCurrentSize
+        = windowInitialSize windowConfig
+    , windowCanvas
+        = canvas
+    }
 
 destroyWindow
   :: Window
@@ -84,16 +91,16 @@ destroyRenderer _ = do
 windowSize
   :: Window
   -> StateVar (V2 CInt)
-windowSize _ = StateVar getter setter
+windowSize (Window {windowCurrentSize}) = StateVar getter setter
   where
     getter
       :: IO (V2 CInt)
     getter = do
-      putStrLn "Video.windowSize / get: stub"
-      pure 0
+      pure windowCurrentSize
 
     setter
       :: V2 CInt
       -> IO ()
     setter _ = do
-      putStrLn "Video.windowSize / set: stub"
+      -- wouldn't be too hard to implement, but I don't need it in this game.
+      error "Video.windowSize / set: not supported"

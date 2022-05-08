@@ -42,8 +42,10 @@ data TextureInfo = TextureInfo
   }
   deriving Show
 
-newtype Window = Window
-  { windowCanvas
+data Window = Window
+  { windowCurrentSize
+      :: V2 CInt
+  , windowCanvas
       :: JSVal
   }
 
