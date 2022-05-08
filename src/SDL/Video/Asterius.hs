@@ -44,6 +44,10 @@ foreign import javascript
   \})()"
   js_createCanvas :: Int -> Int -> IO JSVal
 
+foreign import javascript
+  "$1.getContext('2d')"
+  js_canvasContext :: JSVal -> JSVal
+
 
 createWindow
   :: Text  -- title
@@ -73,9 +77,11 @@ createRenderer
   -> CInt
   -> RendererConfig
   -> IO Renderer
-createRenderer _ _ _ = do
-  putStrLn "Video.createRenderer: stub"
-  pure RendererStub
+createRenderer (Window {windowCanvas}) _ _ = do
+  pure $ Renderer
+    { rendererContext
+        = js_canvasContext windowCanvas
+    }
 
 defaultWindow
   :: WindowConfig
@@ -86,7 +92,9 @@ destroyRenderer
   :: Renderer
   -> IO ()
 destroyRenderer _ = do
-  putStrLn "Video.destroyRenderer: stub"
+  -- nothing to do; the canvas context will disappear with the canvas (or would
+  -- if we were removing the canvas).
+  pure ()
 
 windowSize
   :: Window
