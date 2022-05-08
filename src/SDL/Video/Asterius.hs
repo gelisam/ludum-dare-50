@@ -15,10 +15,17 @@ module SDL.Video.Asterius
 import Asterius.Types
 import Data.StateVar
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Foreign.C.Types (CInt)
 import Linear.V2 (V2(..))
 import SDL.Video.Asterius.Types
 
+
+foreign import javascript
+  "(() => {                      \
+  \  window.document.title = $1; \
+  \})()"
+  js_setTitle :: JSString -> IO ()
 
 foreign import javascript
   "(() => {                                           \
@@ -42,6 +49,7 @@ createWindow
   -> WindowConfig
   -> IO Window
 createWindow title windowConfig = do
+  js_setTitle $ toJSString $ Text.unpack title
   let V2 w h = windowInitialSize windowConfig
   Window <$> js_createCanvas (fromIntegral w) (fromIntegral h)
 
