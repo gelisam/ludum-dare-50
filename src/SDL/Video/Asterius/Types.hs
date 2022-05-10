@@ -18,9 +18,11 @@ import SDL.Asterius (Point)
 data Rectangle a
   = Rectangle (Point V2 a) (V2 a)
 
-newtype Renderer = Renderer
+data Renderer = Renderer
   { rendererContext
       :: JSVal
+  , rendererWindow
+      :: Window
   }
 
 data RendererConfig

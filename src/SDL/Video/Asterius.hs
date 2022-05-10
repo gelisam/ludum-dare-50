@@ -77,10 +77,12 @@ createRenderer
   -> CInt
   -> RendererConfig
   -> IO Renderer
-createRenderer (Window {windowCanvas}) _ _ = do
+createRenderer window@(Window {windowCanvas}) _ _ = do
   pure $ Renderer
     { rendererContext
         = js_canvasContext windowCanvas
+    , rendererWindow
+        = window
     }
 
 defaultWindow

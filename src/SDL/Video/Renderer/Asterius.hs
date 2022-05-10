@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module SDL.Video.Renderer.Asterius
   ( Renderer
   , RendererConfig(..)
@@ -16,6 +17,7 @@ module SDL.Video.Renderer.Asterius
 
 import Data.StateVar
 import Foreign.C.Types (CInt)
+import Linear.V2 (V2(..))
 import SDL.Primitive.Asterius
 import SDL.Video.Asterius.Types
 
@@ -23,8 +25,13 @@ import SDL.Video.Asterius.Types
 clear
   :: Renderer
   -> IO ()
-clear _ = do
-  putStrLn "Renderer.clear: stub"
+clear renderer = do
+  let V2 w h = windowCurrentSize . rendererWindow $ renderer
+  js_fillRect (rendererContext renderer)
+    0
+    0
+    (fromIntegral w)
+    (fromIntegral h)
 
 copy
   :: Renderer
@@ -76,7 +83,7 @@ queryTexture _ = do
 rendererDrawColor
   :: Renderer
   -> StateVar Color
-rendererDrawColor _ = StateVar getter setter
+rendererDrawColor renderer = StateVar getter setter
   where
     getter
       :: IO Color
@@ -87,5 +94,6 @@ rendererDrawColor _ = StateVar getter setter
     setter
       :: Color
       -> IO ()
-    setter _ = do
-      putStrLn "Renderer.windowSize / set: stub"
+    setter color = do
+      setFillColor renderer color
+      setStrokeColor renderer color

@@ -26,6 +26,11 @@ presentWorld window renderer _assets (World {..}) = do
   Primitive.rectangle
     renderer
     (half windowSize - 50)
-    (half windowSize + 50 + 1)
+    (half windowSize)
+    (V4 255 0 0 255)
+  Primitive.rectangle
+    renderer
+    (half windowSize)
+    (half windowSize + 50)
     (V4 0 0 255 255)
   Renderer.present renderer
