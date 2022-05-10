@@ -26,6 +26,7 @@ HS_FILES = $(shell find src -type f -name '*.hs')
 
 dist-js/tordle-exe: ~/.ahc-cabal $(HS_FILES) app/Main.hs tordle.cabal
 	ahc-cabal new-install --flags=asterius --overwrite-policy=always --installdir dist-js tordle-exe
+	touch $@
 
 dist-js/tordle-exe.html: dist-js/tordle-exe
 	ahc-dist --input-exe dist-js/tordle-exe --browser --bundle
